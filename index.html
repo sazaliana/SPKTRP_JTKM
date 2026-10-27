@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Log Masuk — Sistem Pengurusan Kunci & Tempahan</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    .demo-accounts {
+      margin-top: 20px;
+      padding: 14px;
+      background: var(--gray-50);
+      border: 1px solid var(--gray-200);
+      border-radius: var(--border-radius);
+    }
+    .demo-accounts h4 { font-size: 11px; font-weight: 700; color: var(--gray-500); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 10px; }
+    .demo-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 6px 8px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background .15s;
+      margin-bottom: 4px;
+    }
+    .demo-row:hover { background: var(--primary-light); }
+    .demo-badge { font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 10px; }
+    .demo-email { font-size: 12px; color: var(--gray-600); }
+    .error-msg { display: none; color: var(--danger); font-size: 12px; margin-top: 6px; font-weight: 500; }
+    .error-msg.show { display: block; }
+  </style>
+</head>
+<body class="login-page">
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="logo-icon">🏫</div>
+      <h1>Sistem Pengurusan Kunci & Tempahan</h1>
+      <p>Jabatan Teknologi Maklumat</p>
+    </div>
+
+    <form id="loginForm">
+      <div class="form-group">
+        <label for="email">Emel</label>
+        <input type="email" id="email" placeholder="nama@jabatan.edu.my" required autocomplete="email" />
+      </div>
+      <div class="form-group">
+        <label for="password">Kata Laluan</label>
+        <input type="password" id="password" placeholder="••••••••" required />
+        <p class="error-msg" id="errMsg">❌ Emel atau kata laluan tidak sah.</p>
+      </div>
+      <button type="submit" class="btn btn-primary btn-block">
+        <span>🔐</span> Log Masuk
+      </button>
+    </form>
+
+    <div class="demo-accounts">
+      <h4>Akaun Demo (klik untuk isi)</h4>
+      <div class="demo-row" onclick="isiDemo('admin@jabatan.edu.my','admin123')">
+        <span class="demo-email">admin@jabatan.edu.my</span>
+        <span class="badge badge-primary demo-badge">Admin</span>
+      </div>
+      <div class="demo-row" onclick="isiDemo('ahmad@jabatan.edu.my','pensyarah123')">
+        <span class="demo-email">ahmad@jabatan.edu.my</span>
+        <span class="badge badge-purple demo-badge">Pensyarah</span>
+      </div>
+      <div class="demo-row" onclick="isiDemo('siti@jabatan.edu.my','pensyarah123')">
+        <span class="demo-email">siti@jabatan.edu.my</span>
+        <span class="badge badge-purple demo-badge">Pensyarah</span>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/data.js"></script>
+  <script>
+    DB.init();
+
+    // Jika sudah log masuk, redirect
+    const sesiSedia = Sesi.get();
+    if (sesiSedia) {
+      window.location.href = 'dashboard.html';
+    }
+
+    function isiDemo(email, pass) {
+      document.getElementById('email').value = email;
+      document.getElementById('password').value = pass;
+    }
+
+    document.getElementById('loginForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+      const user = DB.login(email, password);
+      if (user) {
+        Sesi.set(user);
+        window.location.href = 'dashboard.html';
+      } else {
+        document.getElementById('errMsg').classList.add('show');
+      }
+    });
+  </script>
+</body>
+</html>

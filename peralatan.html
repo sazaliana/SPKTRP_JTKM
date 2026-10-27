@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tempahan Peralatan — Sistem Pengurusan Kunci & Tempahan</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    .tab-bar { display:flex; gap:4px; margin-bottom:20px; }
+    .tab-btn { padding:8px 16px; border-radius:8px; border:1.5px solid var(--gray-200); background:white; font-size:13px; font-weight:600; color:var(--gray-600); cursor:pointer; transition:all .15s; }
+    .tab-btn.active { background:var(--primary); color:white; border-color:var(--primary); }
+    .tab-panel { display:none; }
+    .tab-panel.active { display:block; }
+    .peralatan-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(220px, 1fr)); gap:14px; }
+    .peralatan-card { background:white; border:1.5px solid var(--gray-200); border-radius:10px; padding:16px; transition:box-shadow .15s; }
+    .peralatan-card:hover { box-shadow:var(--shadow-md); }
+    .peralatan-card.tersedia { border-left:4px solid var(--success); }
+    .peralatan-card.ditempah { border-left:4px solid var(--warning); }
+    .peralatan-icon { font-size:32px; margin-bottom:8px; }
+    .peralatan-kod { font-size:11px; font-weight:700; color:var(--gray-400); text-transform:uppercase; letter-spacing:.05em; }
+    .peralatan-nama { font-size:14px; font-weight:700; color:var(--gray-900); margin:2px 0 4px; }
+    .peralatan-spek { font-size:11px; color:var(--gray-500); }
+    .time-slot { display:flex; gap:10px; align-items:center; }
+    .time-slot select { flex:1; }
+  </style>
+</head>
+<body class="app-layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-logo">
+        <div class="brand-icon">🏫</div>
+        <div><div class="brand-name">SPKTR</div><div class="brand-sub">Pengurusan Kunci & Tempahan</div></div>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-title">Utama</div>
+      <a class="nav-item" href="dashboard.html"><span class="nav-icon">📊</span> Dashboard</a>
+      <div class="nav-section-title">Pinjaman</div>
+      <a class="nav-item" href="kunci.html"><span class="nav-icon">🔑</span> Pinjaman Kunci</a>
+      <div class="nav-section-title">Tempahan</div>
+      <a class="nav-item" href="tempahan.html"><span class="nav-icon">📅</span> Tempahan Ruang</a>
+      <a class="nav-item active" href="peralatan.html"><span class="nav-icon">📦</span> Tempahan Peralatan</a>
+      <div class="nav-section-title">Laporan</div>
+      <a class="nav-item" href="laporan.html"><span class="nav-icon">📋</span> Laporan & Audit</a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-profile" onclick="logKeluar()">
+        <div class="user-avatar" id="sidebarAvatar">A</div>
+        <div class="user-info">
+          <div class="user-name" id="sidebarNama">-</div>
+          <div class="user-role" id="sidebarPeranan">-</div>
+        </div>
+        <span style="margin-left:auto;color:var(--gray-500);font-size:14px">⏏</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <div class="main-content">
+    <header class="topbar">
+      <div class="topbar-left">
+        <h2>📦 Tempahan Peralatan</h2>
+        <p>Tempah laptop dan LCD projector jabatan</p>
+      </div>
+      <div class="topbar-right">
+        <button class="btn btn-primary" onclick="bukaModalTempah()">＋ Buat Tempahan</button>
+        <button class="btn btn-danger btn-sm" onclick="logKeluar()">⏏ Log Keluar</button>
+      </div>
+    </header>
+
+    <div class="page-content">
+
+      <!-- STATS -->
+      <div class="stats-grid" style="grid-template-columns:repeat(4,1fr)">
+        <div class="stat-card">
+          <div class="stat-icon icon-blue">💻</div>
+          <div class="stat-info">
+            <div class="stat-value" id="statLaptop">0</div>
+            <div class="stat-label">Jumlah Laptop</div>
+            <div class="stat-sub" id="statLaptopTersedia">0 tersedia</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon icon-purple">📽️</div>
+          <div class="stat-info">
+            <div class="stat-value" id="statLcd">0</div>
+            <div class="stat-label">Jumlah LCD Projector</div>
+            <div class="stat-sub" id="statLcdTersedia">0 tersedia</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon icon-yellow">⏳</div>
+          <div class="stat-info">
+            <div class="stat-value" id="statMenunggu">0</div>
+            <div class="stat-label">Menunggu Kelulusan</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon icon-green">✅</div>
+          <div class="stat-info">
+            <div class="stat-value" id="statDilulus">0</div>
+            <div class="stat-label">Telah Diluluskan</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB BAR -->
+      <div class="tab-bar">
+        <button class="tab-btn active" onclick="tukTab('inventori',this)">🗄️ Inventori Peralatan</button>
+        <button class="tab-btn" onclick="tukTab('senarai',this)">📋 Senarai Tempahan</button>
+        <button class="tab-btn" id="tabKelulusan" style="display:none" onclick="tukTab('kelulusan',this)">⏳ Kelulusan</button>
+      </div>
+
+      <!-- TAB: INVENTORI -->
+      <div class="tab-panel active" id="panelInventori">
+        <div class="card">
+          <div class="card-header">
+            <div><h3>🗄️ Inventori Peralatan</h3><p>Status semua peralatan jabatan</p></div>
+            <div style="display:flex;gap:8px">
+              <select id="filterJenisInventori" onchange="renderInventori()" style="padding:8px 12px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:13px;color:var(--gray-700)">
+                <option value="">Semua Jenis</option>
+                <option value="laptop">💻 Laptop</option>
+                <option value="lcd">📽️ LCD Projector</option>
+              </select>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="peralatan-grid" id="gridInventori"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB: SENARAI -->
+      <div class="tab-panel" id="panelSenarai">
+        <div class="card">
+          <div class="card-header">
+            <div><h3>📋 Senarai Tempahan Peralatan</h3></div>
+            <div class="filter-bar" style="margin:0">
+              <div class="search-input" style="min-width:160px">
+                <span>🔍</span>
+                <input type="text" id="cariTempahan" placeholder="Cari nama / peralatan..." oninput="renderSenarai()" />
+              </div>
+              <select id="filterJenisSenarai" onchange="renderSenarai()" style="padding:8px 12px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:13px;color:var(--gray-700)">
+                <option value="">Semua Jenis</option>
+                <option value="laptop">💻 Laptop</option>
+                <option value="lcd">📽️ LCD Projector</option>
+              </select>
+              <select id="filterStatusSenarai" onchange="renderSenarai()" style="padding:8px 12px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:13px;color:var(--gray-700)">
+                <option value="">Semua Status</option>
+                <option value="menunggu">Menunggu</option>
+                <option value="diluluskan">Diluluskan</option>
+                <option value="ditolak">Ditolak</option>
+                <option value="dibatal">Dibatal</option>
+              </select>
+            </div>
+          </div>
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Peralatan</th>
+                  <th>Jenis</th>
+                  <th>Pensyarah</th>
+                  <th>Tarikh</th>
+                  <th>Masa</th>
+                  <th>Tujuan</th>
+                  <th>Status</th>
+                  <th>Tindakan</th>
+                </tr>
+              </thead>
+              <tbody id="tblSenarai"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB: KELULUSAN -->
+      <div class="tab-panel" id="panelKelulusan">
+        <div class="card">
+          <div class="card-header">
+            <div><h3>⏳ Tempahan Peralatan Menunggu Kelulusan</h3><p>Sila proses semua permintaan berikut</p></div>
+          </div>
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Peralatan</th>
+                  <th>Jenis</th>
+                  <th>Pensyarah</th>
+                  <th>Tarikh</th>
+                  <th>Masa</th>
+                  <th>Tujuan</th>
+                  <th>Catatan</th>
+                  <th>Tindakan</th>
+                </tr>
+              </thead>
+              <tbody id="tblKelulusan"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- MODAL: BUAT TEMPAHAN PERALATAN -->
+  <div class="modal-overlay" id="modalTempah">
+    <div class="modal" style="max-width:560px">
+      <div class="modal-header">
+        <h3>📦 Buat Tempahan Peralatan</h3>
+        <button class="modal-close" onclick="tutupModal('modalTempah')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div id="alertTempah" class="alert alert-danger mb-16" style="display:none"></div>
+
+        <div class="form-group">
+          <label>Jenis Peralatan *</label>
+          <select id="pilihJenis" onchange="filterPeralatanModal()">
+            <option value="">-- Pilih Jenis --</option>
+            <option value="laptop">💻 Laptop</option>
+            <option value="lcd">📽️ LCD Projector</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Peralatan *</label>
+          <select id="pilihPeralatan" onchange="semakKetersediaan()">
+            <option value="">-- Pilih Peralatan --</option>
+          </select>
+        </div>
+
+        <div id="infoPeralatan" style="display:none;margin-bottom:16px">
+          <div style="padding:12px;background:var(--primary-light);border-radius:8px;border:1px solid #bfdbfe">
+            <div id="infoPeralatanNama" style="font-weight:700;font-size:14px"></div>
+            <div id="infoPeralatanSpek" class="text-muted text-sm mt-8"></div>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="form-group">
+            <label>Tarikh *</label>
+            <input type="date" id="inputTarikh" onchange="semakKetersediaan()" />
+          </div>
+          <div class="form-group" id="grupPensyarah" style="display:none">
+            <label>Pensyarah (Admin)</label>
+            <select id="pilihPensyarah"></select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Masa *</label>
+          <div class="time-slot">
+            <select id="inputMasaMula" onchange="semakKetersediaan()">
+              <option value="">Masa Mula</option>
+            </select>
+            <span style="color:var(--gray-400)">hingga</span>
+            <select id="inputMasaTamat" onchange="semakKetersediaan()">
+              <option value="">Masa Tamat</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="statusKetersediaan" style="display:none;padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:12px"></div>
+
+        <div class="form-group">
+          <label>Tujuan Penggunaan *</label>
+          <input type="text" id="inputTujuan" placeholder="Contoh: Pembentangan projek BCS301, Bilik BK-02" />
+        </div>
+
+        <div class="form-group">
+          <label>Catatan Tambahan</label>
+          <textarea id="inputCatatan" placeholder="Contoh: Perlu kabel HDMI, perlu adapter, dll..." rows="2"></textarea>
+        </div>
+
+        <div style="background:var(--warning-light);border-radius:8px;padding:12px;border:1px solid #fcd34d;font-size:12px;color:var(--warning)">
+          ⚠️ Tempahan akan diproses oleh Admin. Sila pastikan peralatan dipulangkan tepat pada masa yang ditetapkan.
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-gray" onclick="tutupModal('modalTempah')">Batal</button>
+        <button class="btn btn-primary" onclick="buatTempahan()">📦 Hantar Tempahan</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: BUTIRAN -->
+  <div class="modal-overlay" id="modalButiran">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>📋 Butiran Tempahan Peralatan</h3>
+        <button class="modal-close" onclick="tutupModal('modalButiran')">✕</button>
+      </div>
+      <div class="modal-body" id="butiranKandungan"></div>
+      <div class="modal-footer">
+        <button class="btn btn-gray" onclick="tutupModal('modalButiran')">Tutup</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/data.js"></script>
+  <script>
+    DB.init();
+    if (!Sesi.required()) { }
+
+    const sesi = Sesi.get();
+    document.getElementById('sidebarNama').textContent = sesi.nama;
+    document.getElementById('sidebarPeranan').textContent = sesi.peranan === 'admin' ? 'Pentadbir' : sesi.jawatan;
+    const av = document.getElementById('sidebarAvatar');
+    av.textContent = sesi.nama.charAt(0);
+    av.className = 'user-avatar ' + (sesi.peranan === 'admin' ? 'avatar-admin' : 'avatar-lecturer');
+
+    if (sesi.peranan === 'admin') document.getElementById('tabKelulusan').style.display = '';
+
+    // Isi jam
+    function isiJam(selId, def) {
+      const sel = document.getElementById(selId);
+      sel.innerHTML = `<option value="">${def}</option>`;
+      for (let h = 7; h <= 22; h++) {
+        ['00','30'].forEach(m => {
+          if (h === 22 && m === '30') return;
+          const v = `${String(h).padStart(2,'0')}:${m}`;
+          sel.innerHTML += `<option value="${v}">${v}</option>`;
+        });
+      }
+    }
+    isiJam('inputMasaMula','Masa Mula');
+    isiJam('inputMasaTamat','Masa Tamat');
+    document.getElementById('inputTarikh').min = new Date().toISOString().slice(0,10);
+
+    // ── TAB ──
+    function tukTab(id, btn) {
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById('panel' + id.charAt(0).toUpperCase() + id.slice(1)).classList.add('active');
+      btn.classList.add('active');
+      if (id === 'senarai') renderSenarai();
+      if (id === 'kelulusan') renderKelulusan();
+    }
+
+    // ── RENDER STATS ──
+    function renderStats() {
+      const semua = DB.getPeralatan();
+      const laptop = semua.filter(e => e.jenis === 'laptop');
+      const lcd = semua.filter(e => e.jenis === 'lcd');
+      const menunggu = DB.getTempahanPeralatanMenunggu().length;
+      const dilulus = DB.getTempahanPeralatan().filter(t => t.status === 'diluluskan').length;
+
+      document.getElementById('statLaptop').textContent = laptop.length;
+      document.getElementById('statLaptopTersedia').textContent = laptop.filter(e => e.status === 'tersedia').length + ' tersedia';
+      document.getElementById('statLcd').textContent = lcd.length;
+      document.getElementById('statLcdTersedia').textContent = lcd.filter(e => e.status === 'tersedia').length + ' tersedia';
+      document.getElementById('statMenunggu').textContent = menunggu;
+      document.getElementById('statDilulus').textContent = dilulus;
+    }
+
+    // ── RENDER INVENTORI ──
+    function renderInventori() {
+      const filter = document.getElementById('filterJenisInventori').value;
+      let list = DB.getPeralatan();
+      if (filter) list = list.filter(e => e.jenis === filter);
+      const grid = document.getElementById('gridInventori');
+      const ikon = { laptop: '💻', lcd: '📽️' };
+      const labelJenis = { laptop: 'Laptop', lcd: 'LCD Projector' };
+
+      // Semak tempahan aktif hari ini untuk status visual
+      const hariIni = new Date().toISOString().slice(0,10);
+      const masaSekarang = new Date().toLocaleTimeString('ms-MY',{hour:'2-digit',minute:'2-digit'});
+      const ditempahSekarang = DB.getTempahanPeralatan().filter(t =>
+        t.tarikh === hariIni && t.status === 'diluluskan' &&
+        t.masaMula <= masaSekarang && masaSekarang < t.masaTamat
+      ).map(t => t.peralatanId);
+
+      grid.innerHTML = list.map(e => {
+        const sedangDitempah = ditempahSekarang.includes(e.id);
+        const statusLabel = sedangDitempah ? '🔴 Sedang Digunakan' : '🟢 Tersedia';
+        const statusCls = sedangDitempah ? 'ditempah' : 'tersedia';
+        return `<div class="peralatan-card ${statusCls}">
+          <div class="peralatan-icon">${ikon[e.jenis] || '📦'}</div>
+          <div class="peralatan-kod">${e.kod}</div>
+          <div class="peralatan-nama">${e.nama}</div>
+          <div class="peralatan-spek">${e.spesifikasi}</div>
+          <div style="margin-top:10px">
+            <span class="badge ${sedangDitempah ? 'badge-danger' : 'badge-success'}">${statusLabel}</span>
+            <span class="badge badge-gray" style="margin-left:4px">${labelJenis[e.jenis]}</span>
+          </div>
+          <button class="btn btn-primary btn-sm" style="margin-top:10px;width:100%" onclick="bukaModalTempahDengan('${e.id}','${e.jenis}')">
+            📦 Tempah
+          </button>
+        </div>`;
+      }).join('');
+    }
+
+    // ── RENDER SENARAI ──
+    function renderSenarai() {
+      const cari = document.getElementById('cariTempahan').value.toLowerCase();
+      const jenis = document.getElementById('filterJenisSenarai').value;
+      const status = document.getElementById('filterStatusSenarai').value;
+      let list = sesi.peranan === 'admin'
+        ? DB.getTempahanPeralatan()
+        : DB.getTempahanPeralatanByUser(sesi.id);
+      if (jenis) list = list.filter(t => t.jenisPeralatan === jenis);
+      if (status) list = list.filter(t => t.status === status);
+      if (cari) list = list.filter(t =>
+        t.namaPeralatan.toLowerCase().includes(cari) ||
+        t.namaPensyarah.toLowerCase().includes(cari) ||
+        (t.tujuan || '').toLowerCase().includes(cari)
+      );
+      list = list.slice().reverse();
+
+      const statusClass = { diluluskan:'badge-success', menunggu:'badge-warning', ditolak:'badge-danger', dibatal:'badge-gray' };
+      const statusLabel = { diluluskan:'✅ Diluluskan', menunggu:'⏳ Menunggu', ditolak:'❌ Ditolak', dibatal:'🚫 Dibatal' };
+      const ikons = { laptop:'💻', lcd:'📽️' };
+      const tbody = document.getElementById('tblSenarai');
+
+      if (list.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="9" class="text-center text-muted" style="padding:24px">Tiada rekod tempahan</td></tr>';
+        return;
+      }
+      tbody.innerHTML = list.map((t, i) => {
+        const bolehBatal = (sesi.id === t.userId || sesi.peranan === 'admin') && (t.status === 'menunggu' || t.status === 'diluluskan');
+        return `<tr>
+          <td>${i+1}</td>
+          <td><strong>${t.kodPeralatan}</strong><br><span class="text-muted text-sm">${t.namaPeralatan}</span></td>
+          <td>${ikons[t.jenisPeralatan] || '📦'} ${t.jenisPeralatan === 'laptop' ? 'Laptop' : 'LCD Projector'}</td>
+          <td>${t.namaPensyarah}</td>
+          <td>${t.tarikh}</td>
+          <td>${t.masaMula} – ${t.masaTamat}</td>
+          <td>${t.tujuan || '-'}</td>
+          <td><span class="badge ${statusClass[t.status]}">${statusLabel[t.status]}</span></td>
+          <td>
+            <button class="btn btn-gray btn-sm" onclick="lihatButiran('${t.id}')">🔍</button>
+            ${bolehBatal ? `<button class="btn btn-danger btn-sm" onclick="batalTemp('${t.id}')">🚫</button>` : ''}
+          </td>
+        </tr>`;
+      }).join('');
+    }
+
+    // ── RENDER KELULUSAN ──
+    function renderKelulusan() {
+      const list = DB.getTempahanPeralatanMenunggu();
+      const ikons = { laptop:'💻', lcd:'📽️' };
+      const tbody = document.getElementById('tblKelulusan');
+      if (list.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="9" class="text-center text-muted" style="padding:24px">✅ Tiada permintaan menunggu kelulusan</td></tr>';
+        return;
+      }
+      tbody.innerHTML = list.map((t, i) => `<tr>
+        <td>${i+1}</td>
+        <td><strong>${t.namaPeralatan}</strong><br><span class="text-muted text-sm">${t.kodPeralatan}</span></td>
+        <td>${ikons[t.jenisPeralatan] || '📦'} ${t.jenisPeralatan === 'laptop' ? 'Laptop' : 'LCD Projector'}</td>
+        <td>${t.namaPensyarah}</td>
+        <td>${t.tarikh}</td>
+        <td>${t.masaMula} – ${t.masaTamat}</td>
+        <td>${t.tujuan || '-'}</td>
+        <td>${t.catatan || '-'}</td>
+        <td>
+          <button class="btn btn-success btn-sm" onclick="prosesTemp('${t.id}','diluluskan')">✅ Lulus</button>
+          <button class="btn btn-danger btn-sm" onclick="prosesTemp('${t.id}','ditolak')">❌ Tolak</button>
+        </td>
+      </tr>`).join('');
+    }
+
+    function prosesTemp(id, status) {
+      DB.luluskanTempahanPeralatan(id, status);
+      renderKelulusan();
+      renderSenarai();
+      renderStats();
+      renderInventori();
+    }
+
+    function batalTemp(id) {
+      if (!confirm('Anda pasti ingin membatalkan tempahan ini?')) return;
+      DB.batalTempahanPeralatan(id);
+      renderSenarai();
+      renderStats();
+    }
+
+    // ── MODAL TEMPAH ──
+    function bukaModalTempah() {
+      document.getElementById('pilihJenis').value = '';
+      document.getElementById('pilihPeralatan').innerHTML = '<option value="">-- Pilih Jenis dahulu --</option>';
+      document.getElementById('infoPeralatan').style.display = 'none';
+      document.getElementById('alertTempah').style.display = 'none';
+      document.getElementById('statusKetersediaan').style.display = 'none';
+      document.getElementById('inputTujuan').value = '';
+      document.getElementById('inputCatatan').value = '';
+      isiPensyarahModal();
+      document.getElementById('modalTempah').classList.add('active');
+    }
+
+    function bukaModalTempahDengan(peralatanId, jenis) {
+      bukaModalTempah();
+      document.getElementById('pilihJenis').value = jenis;
+      filterPeralatanModal();
+      setTimeout(() => {
+        document.getElementById('pilihPeralatan').value = peralatanId;
+        const e = DB.getPeralatanById(peralatanId);
+        if (e) {
+          document.getElementById('infoPeralatanNama').textContent = `${e.kod} — ${e.nama}`;
+          document.getElementById('infoPeralatanSpek').textContent = e.spesifikasi;
+          document.getElementById('infoPeralatan').style.display = 'block';
+        }
+      }, 10);
+    }
+
+    function isiPensyarahModal() {
+      if (sesi.peranan === 'admin') {
+        document.getElementById('grupPensyarah').style.display = 'block';
+        const users = DB.getUsers().filter(u => u.peranan === 'pensyarah');
+        document.getElementById('pilihPensyarah').innerHTML =
+          `<option value="${sesi.id}">Saya sendiri</option>` +
+          users.map(u => `<option value="${u.id}">${u.nama}</option>`).join('');
+      }
+    }
+
+    function filterPeralatanModal() {
+      const jenis = document.getElementById('pilihJenis').value;
+      const sel = document.getElementById('pilihPeralatan');
+      if (!jenis) { sel.innerHTML = '<option value="">-- Pilih Jenis dahulu --</option>'; return; }
+      const list = DB.getPeralatan().filter(e => e.jenis === jenis);
+      sel.innerHTML = '<option value="">-- Pilih Peralatan --</option>' +
+        list.map(e => `<option value="${e.id}">${e.kod} — ${e.nama}</option>`).join('');
+      document.getElementById('infoPeralatan').style.display = 'none';
+      document.getElementById('statusKetersediaan').style.display = 'none';
+    }
+
+    document.getElementById('pilihPeralatan').addEventListener('change', function() {
+      const e = DB.getPeralatanById(this.value);
+      const box = document.getElementById('infoPeralatan');
+      if (e) {
+        document.getElementById('infoPeralatanNama').textContent = `${e.kod} — ${e.nama}`;
+        document.getElementById('infoPeralatanSpek').textContent = e.spesifikasi;
+        box.style.display = 'block';
+      } else {
+        box.style.display = 'none';
+      }
+      semakKetersediaan();
+    });
+
+    function semakKetersediaan() {
+      const peralatanId = document.getElementById('pilihPeralatan').value;
+      const tarikh = document.getElementById('inputTarikh').value;
+      const mula = document.getElementById('inputMasaMula').value;
+      const tamat = document.getElementById('inputMasaTamat').value;
+      const el = document.getElementById('statusKetersediaan');
+      if (!peralatanId || !tarikh || !mula || !tamat) { el.style.display = 'none'; return; }
+      if (mula >= tamat) {
+        el.style.cssText = 'display:block;background:var(--danger-light);color:var(--danger);border:1px solid #fca5a5;border-radius:8px;padding:10px 14px;font-size:13px;margin-bottom:12px';
+        el.textContent = '❌ Masa mula mesti lebih awal dari masa tamat.'; return;
+      }
+      const konflik = DB.semakKonflikPeralatan(peralatanId, tarikh, mula, tamat);
+      if (konflik) {
+        el.style.cssText = 'display:block;background:var(--danger-light);color:var(--danger);border:1px solid #fca5a5;border-radius:8px;padding:10px 14px;font-size:13px;margin-bottom:12px';
+        el.textContent = '❌ Konflik! Peralatan ini sudah ditempah pada masa tersebut. Sila pilih masa atau peralatan lain.';
+      } else {
+        el.style.cssText = 'display:block;background:var(--success-light);color:var(--success);border:1px solid #6ee7b7;border-radius:8px;padding:10px 14px;font-size:13px;margin-bottom:12px';
+        el.textContent = '✅ Peralatan tersedia pada masa ini.';
+      }
+    }
+
+    function buatTempahan() {
+      const peralatanId = document.getElementById('pilihPeralatan').value;
+      const tarikh = document.getElementById('inputTarikh').value;
+      const masaMula = document.getElementById('inputMasaMula').value;
+      const masaTamat = document.getElementById('inputMasaTamat').value;
+      const tujuan = document.getElementById('inputTujuan').value.trim();
+      const errEl = document.getElementById('alertTempah');
+
+      if (!peralatanId) { errEl.textContent = 'Sila pilih peralatan.'; errEl.style.display = 'flex'; return; }
+      if (!tarikh) { errEl.textContent = 'Sila pilih tarikh.'; errEl.style.display = 'flex'; return; }
+      if (!masaMula || !masaTamat) { errEl.textContent = 'Sila pilih masa mula dan tamat.'; errEl.style.display = 'flex'; return; }
+      if (masaMula >= masaTamat) { errEl.textContent = 'Masa mula mesti lebih awal dari masa tamat.'; errEl.style.display = 'flex'; return; }
+      if (!tujuan) { errEl.textContent = 'Sila masukkan tujuan penggunaan.'; errEl.style.display = 'flex'; return; }
+
+      const userId = sesi.peranan === 'admin'
+        ? (document.getElementById('pilihPensyarah').value || sesi.id)
+        : sesi.id;
+
+      const result = DB.tambahTempahanPeralatan(userId, {
+        peralatanId, tarikh, masaMula, masaTamat, tujuan,
+        catatan: document.getElementById('inputCatatan').value
+      });
+
+      if (result.error) { errEl.textContent = result.error; errEl.style.display = 'flex'; return; }
+
+      tutupModal('modalTempah');
+      renderAll();
+    }
+
+    // ── LIHAT BUTIRAN ──
+    function lihatButiran(id) {
+      const t = DB.getTempahanPeralatan().find(x => x.id === id);
+      if (!t) return;
+      const statusClass = { diluluskan:'badge-success', menunggu:'badge-warning', ditolak:'badge-danger', dibatal:'badge-gray' };
+      const statusLabel = { diluluskan:'✅ Diluluskan', menunggu:'⏳ Menunggu Kelulusan', ditolak:'❌ Ditolak', dibatal:'🚫 Dibatal' };
+      const ikons = { laptop:'💻', lcd:'📽️' };
+      document.getElementById('butiranKandungan').innerHTML = `
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div><div class="text-sm text-muted">Peralatan</div><div class="font-semibold">${ikons[t.jenisPeralatan] || ''} ${t.namaPeralatan} (${t.kodPeralatan})</div></div>
+          <div><div class="text-sm text-muted">Status</div><span class="badge ${statusClass[t.status]}">${statusLabel[t.status]}</span></div>
+          <div><div class="text-sm text-muted">Pensyarah</div><div class="font-semibold">${t.namaPensyarah}</div></div>
+          <div><div class="text-sm text-muted">Tarikh</div><div class="font-semibold">${t.tarikh}</div></div>
+          <div><div class="text-sm text-muted">Masa Mula</div><div class="font-semibold">${t.masaMula}</div></div>
+          <div><div class="text-sm text-muted">Masa Tamat</div><div class="font-semibold">${t.masaTamat}</div></div>
+          <div><div class="text-sm text-muted">Tujuan</div><div class="font-semibold">${t.tujuan || '-'}</div></div>
+          <div><div class="text-sm text-muted">Dicipta Pada</div><div class="font-semibold">${DB.formatTarikhMasa(t.ciptaPada)}</div></div>
+          ${t.catatan ? `<div style="grid-column:1/-1"><div class="text-sm text-muted">Catatan</div><div>${t.catatan}</div></div>` : ''}
+        </div>
+      `;
+      document.getElementById('modalButiran').classList.add('active');
+    }
+
+    function tutupModal(id) { document.getElementById(id).classList.remove('active'); }
+    document.querySelectorAll('.modal-overlay').forEach(m => {
+      m.addEventListener('click', function(e) { if (e.target === this) this.classList.remove('active'); });
+    });
+
+    function renderAll() { renderStats(); renderInventori(); renderSenarai(); if (sesi.peranan === 'admin') renderKelulusan(); }
+    function logKeluar() { Sesi.clear(); window.location.href = 'index.html'; }
+
+    renderAll();
+  </script>
+</body>
+</html>

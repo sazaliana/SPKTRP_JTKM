@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pinjaman Kunci — Sistem Pengurusan Kunci & Tempahan</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body class="app-layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-logo">
+        <div class="brand-icon">🏫</div>
+        <div>
+          <div class="brand-name">SPKTR</div>
+          <div class="brand-sub">Pengurusan Kunci & Tempahan</div>
+        </div>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-title">Utama</div>
+      <a class="nav-item" href="dashboard.html"><span class="nav-icon">📊</span> Dashboard</a>
+      <div class="nav-section-title">Pinjaman</div>
+      <a class="nav-item active" href="kunci.html"><span class="nav-icon">🔑</span> Pinjaman Kunci</a>
+      <div class="nav-section-title">Tempahan</div>
+      <a class="nav-item" href="tempahan.html"><span class="nav-icon">📅</span> Tempahan Ruang</a>
+      <a class="nav-item" href="peralatan.html"><span class="nav-icon">📦</span> Tempahan Peralatan</a>
+      <div class="nav-section-title">Laporan</div>
+      <a class="nav-item" href="laporan.html"><span class="nav-icon">📋</span> Laporan & Audit</a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-profile" onclick="logKeluar()">
+        <div class="user-avatar" id="sidebarAvatar">A</div>
+        <div class="user-info">
+          <div class="user-name" id="sidebarNama">-</div>
+          <div class="user-role" id="sidebarPeranan">-</div>
+        </div>
+        <span style="margin-left:auto;color:var(--gray-500);font-size:14px">⏏</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <div class="main-content">
+    <header class="topbar">
+      <div class="topbar-left">
+        <h2>🔑 Pinjaman Kunci</h2>
+        <p>Log pinjaman & pemulangan kunci ruang jabatan</p>
+      </div>
+      <div class="topbar-right">
+        <button class="btn btn-primary" onclick="bukaModalPinjam()">＋ Pinjam Kunci</button>
+        <button class="btn btn-danger btn-sm" onclick="logKeluar()">⏏ Log Keluar</button>
+      </div>
+    </header>
+
+    <div class="page-content">
+
+      <!-- STATS -->
+      <div class="stats-grid" style="grid-template-columns:repeat(4,1fr)">
+        <div class="stat-card">
+          <div class="stat-icon icon-green">🟢</div>
+          <div class="stat-info">
+            <div class="stat-value" id="statTersedia">0</div>
+            <div class="stat-label">Kunci Tersedia</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon icon-red">🔴</div>
+          <div class="stat-info">
+            <div class="stat-value" id="statDipinjam">0</div>
+            <div class="stat-label">Sedang Dipinjam</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon icon-yellow">📋</div>
+          <div class="stat-info">
+            <div class="stat-value" id="statAktif">0</div>
+            <div class="stat-label">Pinjaman Aktif</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon icon-blue">📊</div>
+          <div class="stat-info">
+            <div class="stat-value" id="statJumlahKunci">0</div>
+            <div class="stat-label">Jumlah Kunci</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PINJAMAN AKTIF -->
+      <div class="card mb-24">
+        <div class="card-header">
+          <div>
+            <h3>🔄 Pinjaman Aktif</h3>
+            <p>Kunci yang belum dipulangkan</p>
+          </div>
+        </div>
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Kunci</th>
+                <th>Pensyarah</th>
+                <th>Tujuan</th>
+                <th>Masa Ambil</th>
+                <th>Tempoh</th>
+                <th>Status</th>
+                <th>Tindakan</th>
+              </tr>
+            </thead>
+            <tbody id="tblAktif">
+              <tr><td colspan="8" class="text-center text-muted" style="padding:28px">✅ Tiada pinjaman aktif pada masa ini</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- SEJARAH PINJAMAN -->
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <h3>📜 Sejarah Pinjaman</h3>
+            <p>Rekod lengkap semua pinjaman</p>
+          </div>
+          <div class="filter-bar" style="margin:0">
+            <div class="search-input" style="min-width:160px">
+              <span>🔍</span>
+              <input type="text" id="cariPinjaman" placeholder="Cari nama / kunci..." oninput="renderSejarah()" />
+            </div>
+            <select id="filterStatusPinjaman" onchange="renderSejarah()" style="padding:8px 12px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:13px;color:var(--gray-700)">
+              <option value="">Semua Status</option>
+              <option value="aktif">Aktif</option>
+              <option value="selesai">Selesai</option>
+            </select>
+          </div>
+        </div>
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Kunci</th>
+                <th>Pensyarah</th>
+                <th>Tujuan</th>
+                <th>Masa Ambil</th>
+                <th>Masa Pulang</th>
+                <th>Tempoh</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="tblSejarah"></tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- MODAL: PINJAM KUNCI -->
+  <div class="modal-overlay" id="modalPinjam">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>🔑 Pinjam Kunci</h3>
+        <button class="modal-close" onclick="tutupModal('modalPinjam')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div id="alertPinjam" class="alert alert-danger mb-16" style="display:none"></div>
+        <div class="form-group">
+          <label>Kunci yang Ingin Dipinjam *</label>
+          <select id="pilihKunci">
+            <option value="">-- Pilih Kunci --</option>
+          </select>
+        </div>
+        <div class="form-group" id="kunciInfoBox" style="display:none">
+          <div style="padding:12px;background:var(--success-light);border-radius:8px;border:1px solid #6ee7b7">
+            <strong id="kunciInfoNama">-</strong><br>
+            <span class="text-muted text-sm" id="kunciInfoLokasi">-</span>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Tujuan Pinjaman *</label>
+          <textarea id="inputTujuan" placeholder="Contoh: Kelas BCS301, Sem 2 2024/2025..." rows="3"></textarea>
+        </div>
+        <div class="form-group" id="grupPilihPensyarah" style="display:none">
+          <label>Pensyarah (Admin sahaja)</label>
+          <select id="pilihPensyarah">
+            <option value="">-- Pilih Pensyarah --</option>
+          </select>
+        </div>
+        <div style="background:var(--warning-light);border-radius:8px;padding:12px;border:1px solid #fcd34d;font-size:12px;color:var(--warning)">
+          ⚠️ Sila pastikan kunci dipulangkan selepas selesai digunakan. Masa pengambilan akan direkodkan secara automatik.
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-gray" onclick="tutupModal('modalPinjam')">Batal</button>
+        <button class="btn btn-primary" onclick="pinjamKunci()">🔑 Pinjam Sekarang</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: PULANG KUNCI -->
+  <div class="modal-overlay" id="modalPulang">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>✅ Pulang Kunci</h3>
+        <button class="modal-close" onclick="tutupModal('modalPulang')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div id="pulangInfo" style="padding:16px;background:var(--primary-light);border-radius:8px;margin-bottom:16px">
+          <div id="pulangInfoKunci" style="font-size:16px;font-weight:700"></div>
+          <div id="pulangInfoMasa" class="text-muted text-sm mt-8"></div>
+        </div>
+        <p style="font-size:13px;color:var(--gray-600)">Anda akan mengesahkan pemulangan kunci ini. Masa pemulangan akan direkodkan secara automatik.</p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-gray" onclick="tutupModal('modalPulang')">Batal</button>
+        <button class="btn btn-success" onclick="sahPulang()">✅ Sahkan Pemulangan</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/data.js"></script>
+  <script>
+    DB.init();
+    if (!Sesi.required()) { }
+
+    const sesi = Sesi.get();
+    document.getElementById('sidebarNama').textContent = sesi.nama;
+    document.getElementById('sidebarPeranan').textContent = sesi.peranan === 'admin' ? 'Pentadbir' : sesi.jawatan;
+    const av = document.getElementById('sidebarAvatar');
+    av.textContent = sesi.nama.charAt(0);
+    av.className = 'user-avatar ' + (sesi.peranan === 'admin' ? 'avatar-admin' : 'avatar-lecturer');
+
+    let pilihPulangId = null;
+
+    // ── RENDER STATS ──
+    function renderStats() {
+      const kunci = DB.getKunci();
+      document.getElementById('statTersedia').textContent = kunci.filter(k => k.status === 'tersedia').length;
+      document.getElementById('statDipinjam').textContent = kunci.filter(k => k.status === 'dipinjam').length;
+      document.getElementById('statAktif').textContent = DB.getPinjamanAktif().length;
+      document.getElementById('statJumlahKunci').textContent = kunci.length;
+    }
+
+    // ── RENDER PINJAMAN AKTIF ──
+    function renderAktif() {
+      const list = sesi.peranan === 'admin'
+        ? DB.getPinjamanAktif()
+        : DB.getPinjamanAktif().filter(p => p.userId === sesi.id);
+      const tbody = document.getElementById('tblAktif');
+      if (list.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted" style="padding:28px">✅ Tiada pinjaman aktif</td></tr>';
+        return;
+      }
+      tbody.innerHTML = list.map((p, i) => {
+        const dur = Math.round((new Date() - new Date(p.masaAmbil)) / 60000);
+        const j = Math.floor(dur / 60), m = dur % 60;
+        const durStr = j > 0 ? `${j}j ${m}m` : `${m}m`;
+        const lewat = dur > 240;
+        const bolehPulang = sesi.peranan === 'admin' || p.userId === sesi.id;
+        return `<tr>
+          <td>${i + 1}</td>
+          <td><strong>${p.kodKunci}</strong><br><span class="text-muted text-sm">${p.namaKunci}</span></td>
+          <td>${p.namaPensyarah}</td>
+          <td><span title="${p.tujuan}" style="max-width:120px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.tujuan || '-'}</span></td>
+          <td>${DB.formatTarikhMasa(p.masaAmbil)}</td>
+          <td><span class="${lewat ? 'text-danger font-bold' : ''}">${durStr}</span></td>
+          <td><span class="badge ${lewat ? 'badge-danger' : 'badge-warning'}">${lewat ? '⚠️ Lewat' : '🔄 Aktif'}</span></td>
+          <td>${bolehPulang ? `<button class="btn btn-success btn-sm" onclick="bukaPulang('${p.id}')">✅ Pulang</button>` : '-'}</td>
+        </tr>`;
+      }).join('');
+    }
+
+    // ── RENDER SEJARAH ──
+    function renderSejarah() {
+      const cari = document.getElementById('cariPinjaman').value.toLowerCase();
+      const status = document.getElementById('filterStatusPinjaman').value;
+      let list = sesi.peranan === 'admin'
+        ? DB.getPinjaman()
+        : DB.getPinjamanByUser(sesi.id);
+      if (status) list = list.filter(p => p.status === status);
+      if (cari) list = list.filter(p =>
+        p.namaPensyarah.toLowerCase().includes(cari) ||
+        p.namaKunci.toLowerCase().includes(cari) ||
+        p.kodKunci.toLowerCase().includes(cari)
+      );
+      list = list.slice().reverse();
+      const tbody = document.getElementById('tblSejarah');
+      if (list.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted" style="padding:24px">Tiada rekod</td></tr>';
+        return;
+      }
+      tbody.innerHTML = list.map((p, i) => `<tr>
+        <td>${i + 1}</td>
+        <td><strong>${p.kodKunci}</strong><br><span class="text-muted text-sm">${p.namaKunci}</span></td>
+        <td>${p.namaPensyarah}</td>
+        <td>${p.tujuan || '-'}</td>
+        <td>${DB.formatTarikhMasa(p.masaAmbil)}</td>
+        <td>${p.masaPulang ? DB.formatTarikhMasa(p.masaPulang) : '<span class="text-muted">Belum pulang</span>'}</td>
+        <td>${DB.durasi(p.masaAmbil, p.masaPulang)}</td>
+        <td><span class="badge ${p.status === 'selesai' ? 'badge-success' : 'badge-warning'}">${p.status === 'selesai' ? '✅ Selesai' : '🔄 Aktif'}</span></td>
+      </tr>`).join('');
+    }
+
+    // ── MODAL PINJAM ──
+    function bukaModalPinjam() {
+      // Isi senarai kunci tersedia
+      const kunci = DB.getKunci().filter(k => k.status === 'tersedia');
+      const sel = document.getElementById('pilihKunci');
+      sel.innerHTML = '<option value="">-- Pilih Kunci --</option>' +
+        kunci.map(k => `<option value="${k.id}">${k.kod} — ${k.nama} (${k.lokasi})</option>`).join('');
+
+      // Jika admin, papar pilihan pensyarah
+      if (sesi.peranan === 'admin') {
+        document.getElementById('grupPilihPensyarah').style.display = 'block';
+        const users = DB.getUsers().filter(u => u.peranan === 'pensyarah');
+        const selP = document.getElementById('pilihPensyarah');
+        selP.innerHTML = `<option value="${sesi.id}">Saya sendiri (${sesi.nama})</option>` +
+          users.map(u => `<option value="${u.id}">${u.nama}</option>`).join('');
+      }
+
+      document.getElementById('kunciInfoBox').style.display = 'none';
+      document.getElementById('alertPinjam').style.display = 'none';
+      document.getElementById('inputTujuan').value = '';
+      document.getElementById('modalPinjam').classList.add('active');
+    }
+
+    document.getElementById('pilihKunci').addEventListener('change', function() {
+      const k = DB.getKunciById(this.value);
+      const box = document.getElementById('kunciInfoBox');
+      if (k) {
+        document.getElementById('kunciInfoNama').textContent = k.nama;
+        document.getElementById('kunciInfoLokasi').textContent = k.lokasi + ' — ' + (k.kategori === 'makmal' ? '🔬 Makmal' : k.kategori === 'kuliah' ? '📚 Bilik Kuliah' : '🏛 Bilik Seminar');
+        box.style.display = 'block';
+      } else {
+        box.style.display = 'none';
+      }
+    });
+
+    function pinjamKunci() {
+      const kunciId = document.getElementById('pilihKunci').value;
+      const tujuan = document.getElementById('inputTujuan').value.trim();
+      const errEl = document.getElementById('alertPinjam');
+
+      if (!kunciId) { errEl.textContent = 'Sila pilih kunci.'; errEl.style.display = 'flex'; return; }
+      if (!tujuan) { errEl.textContent = 'Sila masukkan tujuan pinjaman.'; errEl.style.display = 'flex'; return; }
+
+      const userId = sesi.peranan === 'admin'
+        ? (document.getElementById('pilihPensyarah').value || sesi.id)
+        : sesi.id;
+
+      DB.tambahPinjaman(userId, kunciId, tujuan);
+      tutupModal('modalPinjam');
+      renderAll();
+    }
+
+    // ── MODAL PULANG ──
+    function bukaPulang(pinjamanId) {
+      pilihPulangId = pinjamanId;
+      const p = DB.getPinjaman().find(x => x.id === pinjamanId);
+      if (!p) return;
+      document.getElementById('pulangInfoKunci').textContent = `🔑 ${p.kodKunci} — ${p.namaKunci}`;
+      document.getElementById('pulangInfoMasa').textContent = `Dipinjam oleh ${p.namaPensyarah} pada ${DB.formatTarikhMasa(p.masaAmbil)}`;
+      document.getElementById('modalPulang').classList.add('active');
+    }
+
+    function sahPulang() {
+      if (!pilihPulangId) return;
+      DB.pulangKunci(pilihPulangId);
+      pilihPulangId = null;
+      tutupModal('modalPulang');
+      renderAll();
+    }
+
+    function tutupModal(id) { document.getElementById(id).classList.remove('active'); }
+
+    document.querySelectorAll('.modal-overlay').forEach(m => {
+      m.addEventListener('click', function(e) { if (e.target === this) this.classList.remove('active'); });
+    });
+
+    function renderAll() { renderStats(); renderAktif(); renderSejarah(); }
+    function logKeluar() { Sesi.clear(); window.location.href = 'index.html'; }
+    renderAll();
+  </script>
+</body>
+</html>

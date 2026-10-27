@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard — Sistem Pengurusan Kunci & Tempahan</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body class="app-layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-logo">
+        <div class="brand-icon">🏫</div>
+        <div>
+          <div class="brand-name">SPKTR</div>
+          <div class="brand-sub">Pengurusan Kunci & Tempahan</div>
+        </div>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="nav-section-title">Utama</div>
+      <a class="nav-item active" href="dashboard.html">
+        <span class="nav-icon">📊</span> Dashboard
+      </a>
+
+      <div class="nav-section-title">Pinjaman</div>
+      <a class="nav-item" href="kunci.html">
+        <span class="nav-icon">🔑</span> Pinjaman Kunci
+        <span class="nav-badge" id="badgePinjamanAktif">0</span>
+      </a>
+
+      <div class="nav-section-title">Tempahan</div>
+      <a class="nav-item" href="tempahan.html">
+        <span class="nav-icon">📅</span> Tempahan Ruang
+        <span class="nav-badge" id="badgeTempahanMenunggu" style="display:none">0</span>
+      </a>
+      <a class="nav-item" href="peralatan.html">
+        <span class="nav-icon">📦</span> Tempahan Peralatan
+        <span class="nav-badge" id="badgePeralatanMenunggu" style="display:none">0</span>
+      </a>
+
+      <div class="nav-section-title">Laporan</div>
+      <a class="nav-item" href="laporan.html">
+        <span class="nav-icon">📋</span> Laporan & Audit
+      </a>
+
+      <div id="adminMenu" style="display:none">
+        <div class="nav-section-title">Pentadbiran</div>
+        <a class="nav-item" href="#" onclick="bukaModalKunci()">
+          <span class="nav-icon">🗝️</span> Urus Kunci
+        </a>
+        <a class="nav-item" href="#" onclick="bukaModalPengguna()">
+          <span class="nav-icon">👥</span> Urus Pengguna
+        </a>
+      </div>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="user-profile" onclick="logKeluar()">
+        <div class="user-avatar" id="sidebarAvatar">A</div>
+        <div class="user-info">
+          <div class="user-name" id="sidebarNama">-</div>
+          <div class="user-role" id="sidebarPeranan">-</div>
+        </div>
+        <span style="margin-left:auto;color:var(--gray-500);font-size:14px">⏏</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <div class="main-content">
+    <header class="topbar">
+      <div class="topbar-left">
+        <h2>Dashboard</h2>
+        <p id="topbarTarikh"></p>
+      </div>
+      <div class="topbar-right">
+        <div style="position:relative">
+          <button class="notif-btn" onclick="togolNotif()">🔔
+            <span class="notif-dot" id="notifDot" style="display:none"></span>
+          </button>
+          <!-- Panel Notifikasi -->
+          <div id="panelNotif" style="display:none;position:absolute;right:0;top:46px;width:340px;background:white;border:1px solid var(--gray-200);border-radius:12px;box-shadow:var(--shadow-lg);z-index:300;overflow:hidden">
+            <div style="padding:14px 16px;border-bottom:1px solid var(--gray-200);display:flex;align-items:center;justify-content:space-between">
+              <strong style="font-size:14px">Notifikasi</strong>
+              <button onclick="bacaSemua()" style="font-size:11px;color:var(--primary);background:none;border:none;cursor:pointer">Baca semua</button>
+            </div>
+            <div id="senaraNotif" style="max-height:320px;overflow-y:auto"></div>
+          </div>
+        </div>
+        <button class="btn btn-danger btn-sm" onclick="logKeluar()">⏏ Log Keluar</button>
+      </div>
+    </header>
+
+    <div class="page-content">
+
+      <!-- SELAMAT DATANG -->
+      <div class="alert alert-info mb-24" id="alertSelamat">
+        👋 Selamat datang! Sistem Pengurusan Kunci & Tempahan Ruang Jabatan.
+      </div>
+
+      <!-- STATS -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon icon-blue">🔑</div>
+          <div class="stat-info">
+            <div class="stat-value" id="statKunciTersedia">0</div>
+            <div class="stat-label">Kunci Tersedia</div>
+            <div class="stat-sub" id="statKunciDipinjam">0 sedang dipinjam</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon icon-yellow">📋</div>
+          <div class="stat-info">
+            <div class="stat-value" id="statPinjamanAktif">0</div>
+            <div class="stat-label">Pinjaman Aktif</div>
+            <div class="stat-sub">Kunci belum dipulangkan</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon icon-green">📅</div>
+          <div class="stat-info">
+            <div class="stat-value" id="statTempahanHariIni">0</div>
+            <div class="stat-label">Tempahan Hari Ini</div>
+            <div class="stat-sub" id="statTempahanMenunggu">0 menunggu kelulusan</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon icon-purple">🏫</div>
+          <div class="stat-info">
+            <div class="stat-value" id="statJumlahRuang">0</div>
+            <div class="stat-label">Jumlah Ruang</div>
+            <div class="stat-sub">Makmal & Bilik Kuliah</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon icon-blue">💻</div>
+          <div class="stat-info">
+            <div class="stat-value" id="statLaptopTersedia">0</div>
+            <div class="stat-label">Laptop Tersedia</div>
+            <div class="stat-sub" id="statLaptopSub">drp 0 unit</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon icon-purple">📽️</div>
+          <div class="stat-info">
+            <div class="stat-value" id="statLcdTersedia">0</div>
+            <div class="stat-label">LCD Tersedia</div>
+            <div class="stat-sub" id="statLcdSub">drp 0 unit</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- GRID 2 KOLUM -->
+      <div class="grid-2 gap-16">
+
+        <!-- PINJAMAN AKTIF -->
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <h3>🔑 Pinjaman Kunci Aktif</h3>
+              <p>Kunci yang sedang dipinjam</p>
+            </div>
+            <a href="kunci.html" class="btn btn-outline btn-sm">Lihat semua</a>
+          </div>
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>Kunci</th>
+                  <th>Pensyarah</th>
+                  <th>Masa Ambil</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="tblPinjamanAktif">
+                <tr><td colspan="4" class="text-center text-muted" style="padding:24px">Tiada pinjaman aktif</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- TEMPAHAN HARI INI -->
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <h3>📅 Tempahan Hari Ini</h3>
+              <p>Jadual penggunaan ruang hari ini</p>
+            </div>
+            <a href="tempahan.html" class="btn btn-outline btn-sm">Lihat semua</a>
+          </div>
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>Ruang</th>
+                  <th>Pensyarah</th>
+                  <th>Masa</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="tblTempahanHariIni">
+                <tr><td colspan="4" class="text-center text-muted" style="padding:24px">Tiada tempahan hari ini</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- MENUNGGU KELULUSAN (Admin sahaja) -->
+      <div class="mt-24" id="seksyenMenunggu" style="display:none">
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <h3>⏳ Tempahan Menunggu Kelulusan</h3>
+              <p>Sila proses permintaan berikut</p>
+            </div>
+          </div>
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>Ruang</th>
+                  <th>Pensyarah</th>
+                  <th>Tarikh</th>
+                  <th>Masa</th>
+                  <th>Tujuan</th>
+                  <th>Tindakan</th>
+                </tr>
+              </thead>
+              <tbody id="tblMenunggu">
+                <tr><td colspan="6" class="text-center text-muted" style="padding:24px">Tiada permintaan menunggu</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- STATUS KUNCI (ringkasan) -->
+      <div class="mt-24">
+        <div class="card">
+          <div class="card-header">
+            <h3>🗝️ Status Semua Kunci</h3>
+          </div>
+          <div class="card-body">
+            <div id="gridStatusKunci" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px"></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script src="js/data.js"></script>
+  <script>
+    DB.init();
+    if (!Sesi.required()) { /* redirect handled */ }
+
+    const sesi = Sesi.get();
+
+    // Setup UI ikut peranan
+    document.getElementById('sidebarNama').textContent = sesi.nama;
+    document.getElementById('sidebarPeranan').textContent = sesi.peranan === 'admin' ? 'Pentadbir' : sesi.jawatan;
+    const av = document.getElementById('sidebarAvatar');
+    av.textContent = sesi.nama.charAt(0);
+    av.className = 'user-avatar ' + (sesi.peranan === 'admin' ? 'avatar-admin' : 'avatar-lecturer');
+
+    document.getElementById('topbarTarikh').textContent = new Date().toLocaleDateString('ms-MY', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+
+    if (sesi.peranan === 'admin') {
+      document.getElementById('adminMenu').style.display = 'block';
+      document.getElementById('seksyenMenunggu').style.display = 'block';
+    }
+
+    // ── RENDER STATS ──
+    function renderStats() {
+      const kunci = DB.getKunci();
+      const tersedia = kunci.filter(k => k.status === 'tersedia').length;
+      const dipinjam = kunci.filter(k => k.status === 'dipinjam').length;
+      const pinjamanAktif = DB.getPinjamanAktif();
+      const tempahanHariIni = DB.getTempahanHariIni();
+      const tempahanMenunggu = DB.getTempahan().filter(t => t.status === 'menunggu');
+
+      document.getElementById('statKunciTersedia').textContent = tersedia;
+      document.getElementById('statKunciDipinjam').textContent = dipinjam + ' sedang dipinjam';
+      document.getElementById('statPinjamanAktif').textContent = pinjamanAktif.length;
+      document.getElementById('statTempahanHariIni').textContent = tempahanHariIni.length;
+      document.getElementById('statTempahanMenunggu').textContent = tempahanMenunggu.length + ' menunggu kelulusan';
+      document.getElementById('statJumlahRuang').textContent = kunci.length;
+
+      // Stat peralatan
+      const peralatan = DB.getPeralatan();
+      const laptop = peralatan.filter(e => e.jenis === 'laptop');
+      const lcd = peralatan.filter(e => e.jenis === 'lcd');
+      document.getElementById('statLaptopTersedia').textContent = laptop.filter(e => e.status === 'tersedia').length;
+      document.getElementById('statLaptopSub').textContent = `drp ${laptop.length} unit`;
+      document.getElementById('statLcdTersedia').textContent = lcd.filter(e => e.status === 'tersedia').length;
+      document.getElementById('statLcdSub').textContent = `drp ${lcd.length} unit`;
+
+      // Badges sidebar
+      document.getElementById('badgePinjamanAktif').textContent = pinjamanAktif.length;
+      document.getElementById('badgePinjamanAktif').style.display = pinjamanAktif.length > 0 ? '' : 'none';
+      const badgeMenunggu = document.getElementById('badgeTempahanMenunggu');
+      badgeMenunggu.textContent = tempahanMenunggu.length;
+      badgeMenunggu.style.display = tempahanMenunggu.length > 0 && sesi.peranan === 'admin' ? '' : 'none';
+      const peralatanMenunggu = DB.getTempahanPeralatanMenunggu().length;
+      const badgePeralatan = document.getElementById('badgePeralatanMenunggu');
+      badgePeralatan.textContent = peralatanMenunggu;
+      badgePeralatan.style.display = peralatanMenunggu > 0 && sesi.peranan === 'admin' ? '' : 'none';
+    }
+
+    // ── RENDER PINJAMAN AKTIF ──
+    function renderPinjamanAktif() {
+      const list = sesi.peranan === 'admin'
+        ? DB.getPinjamanAktif()
+        : DB.getPinjamanAktif().filter(p => p.userId === sesi.id);
+      const tbody = document.getElementById('tblPinjamanAktif');
+      if (list.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted" style="padding:24px">Tiada pinjaman aktif</td></tr>';
+        return;
+      }
+      tbody.innerHTML = list.map(p => {
+        const dur = Math.round((new Date() - new Date(p.masaAmbil)) / 60000);
+        const lewat = dur > 240;
+        return `<tr>
+          <td><strong>${p.kodKunci}</strong><br><span class="text-muted text-sm">${p.namaKunci}</span></td>
+          <td>${p.namaPensyarah}</td>
+          <td>${DB.formatMasa(p.masaAmbil)}</td>
+          <td><span class="badge ${lewat ? 'badge-danger' : 'badge-warning'}">${lewat ? '⚠️ Lewat' : '🔄 Aktif'}</span></td>
+        </tr>`;
+      }).join('');
+    }
+
+    // ── RENDER TEMPAHAN HARI INI ──
+    function renderTempahanHariIni() {
+      const list = DB.getTempahanHariIni().sort((a,b) => a.masaMula.localeCompare(b.masaMula));
+      const tbody = document.getElementById('tblTempahanHariIni');
+      if (list.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted" style="padding:24px">Tiada tempahan hari ini</td></tr>';
+        return;
+      }
+      tbody.innerHTML = list.map(t => {
+        const statusClass = { diluluskan: 'badge-success', menunggu: 'badge-warning', ditolak: 'badge-danger', dibatal: 'badge-gray' };
+        const statusLabel = { diluluskan: '✅ Diluluskan', menunggu: '⏳ Menunggu', ditolak: '❌ Ditolak', dibatal: '🚫 Dibatal' };
+        return `<tr>
+          <td><strong>${t.kodRuang}</strong><br><span class="text-muted text-sm">${t.namaRuang}</span></td>
+          <td>${t.namaPensyarah}</td>
+          <td>${t.masaMula} – ${t.masaTamat}</td>
+          <td><span class="badge ${statusClass[t.status]}">${statusLabel[t.status]}</span></td>
+        </tr>`;
+      }).join('');
+    }
+
+    // ── RENDER MENUNGGU KELULUSAN ──
+    function renderMenunggu() {
+      if (sesi.peranan !== 'admin') return;
+      const list = DB.getTempahan().filter(t => t.status === 'menunggu');
+      const tbody = document.getElementById('tblMenunggu');
+      if (list.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted" style="padding:24px">✅ Tiada permintaan menunggu kelulusan</td></tr>';
+        return;
+      }
+      tbody.innerHTML = list.map(t => `<tr>
+        <td><strong>${t.namaRuang}</strong></td>
+        <td>${t.namaPensyarah}</td>
+        <td>${t.tarikh}</td>
+        <td>${t.masaMula} – ${t.masaTamat}</td>
+        <td>${t.tujuan || '-'}</td>
+        <td>
+          <button class="btn btn-success btn-sm" onclick="prosesTemp('${t.id}','diluluskan')">✅ Lulus</button>
+          <button class="btn btn-danger btn-sm" onclick="prosesTemp('${t.id}','ditolak')">❌ Tolak</button>
+        </td>
+      </tr>`).join('');
+    }
+
+    function prosesTemp(id, status) {
+      DB.luluskanTempahan(id, status);
+      renderAll();
+    }
+
+    // ── STATUS KUNCI ──
+    function renderGridKunci() {
+      const kunci = DB.getKunci();
+      const grid = document.getElementById('gridStatusKunci');
+      grid.innerHTML = kunci.map(k => {
+        const warna = k.status === 'tersedia' ? 'var(--success-light)' : 'var(--danger-light)';
+        const warnaT = k.status === 'tersedia' ? 'var(--success)' : 'var(--danger)';
+        const ikon = k.status === 'tersedia' ? '🟢' : '🔴';
+        return `<div style="padding:12px;border-radius:8px;border:1px solid var(--gray-200);background:${warna}">
+          <div style="font-weight:700;font-size:13px;color:${warnaT}">${ikon} ${k.kod}</div>
+          <div style="font-size:12px;margin-top:2px;color:var(--gray-700)">${k.nama}</div>
+          <div style="font-size:11px;color:var(--gray-500)">${k.lokasi}</div>
+        </div>`;
+      }).join('');
+    }
+
+    // ── NOTIFIKASI ──
+    function renderNotif() {
+      const list = DB.getNotifikasiUser(sesi.id).slice(0, 10);
+      const unread = list.filter(n => !n.dibaca).length;
+      document.getElementById('notifDot').style.display = unread > 0 ? '' : 'none';
+      const el = document.getElementById('senaraNotif');
+      if (list.length === 0) {
+        el.innerHTML = '<div class="text-center text-muted" style="padding:24px;font-size:13px">Tiada notifikasi</div>';
+        return;
+      }
+      const jenisStyle = { info: '#e0f2fe', success: '#def7ec', warning: '#fef3c7', danger: '#fde8e8' };
+      el.innerHTML = list.map(n => `
+        <div onclick="DB.tandaBacaNotifikasi('${n.id}');renderNotif()" style="padding:12px 16px;border-bottom:1px solid var(--gray-100);cursor:pointer;background:${n.dibaca ? 'white' : jenisStyle[n.jenis] || '#f9fafb'}">
+          <div style="font-size:13px;color:var(--gray-800)">${n.mesej}</div>
+          <div style="font-size:11px;color:var(--gray-400);margin-top:3px">${DB.formatTarikhMasa(n.masa)}</div>
+        </div>
+      `).join('');
+    }
+
+    function togolNotif() {
+      const panel = document.getElementById('panelNotif');
+      panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+      renderNotif();
+    }
+
+    function bacaSemua() { DB.tandaBacaSemua(sesi.id); renderNotif(); }
+
+    // Tutup panel notif bila klik luar
+    document.addEventListener('click', function(e) {
+      if (!e.target.closest('.notif-btn') && !e.target.closest('#panelNotif')) {
+        document.getElementById('panelNotif').style.display = 'none';
+      }
+    });
+
+    function renderAll() {
+      renderStats();
+      renderPinjamanAktif();
+      renderTempahanHariIni();
+      renderMenunggu();
+      renderGridKunci();
+      renderNotif();
+    }
+
+    function logKeluar() { Sesi.clear(); window.location.href = 'index.html'; }
+
+    renderAll();
+  </script>
+</body>
+</html>

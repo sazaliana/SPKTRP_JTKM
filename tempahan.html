@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tempahan Ruang — Sistem Pengurusan Kunci & Tempahan</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    .cal-nav { display:flex;align-items:center;justify-content:space-between;margin-bottom:16px; }
+    .cal-nav h3 { font-size:16px;font-weight:700;color:var(--gray-900); }
+    .cal-nav button { background:var(--gray-100);border:1px solid var(--gray-200);border-radius:6px;padding:6px 14px;cursor:pointer;font-size:13px;font-weight:600;color:var(--gray-700); }
+    .cal-nav button:hover { background:var(--gray-200); }
+    .tab-bar { display:flex;gap:4px;margin-bottom:20px; }
+    .tab-btn { padding:8px 16px;border-radius:8px;border:1.5px solid var(--gray-200);background:white;font-size:13px;font-weight:600;color:var(--gray-600);cursor:pointer;transition:all .15s; }
+    .tab-btn.active { background:var(--primary);color:white;border-color:var(--primary); }
+    .tab-panel { display:none; }
+    .tab-panel.active { display:block; }
+    .time-slot { display:flex;gap:12px;align-items:center; }
+    .time-slot select { flex:1; }
+  </style>
+</head>
+<body class="app-layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-logo">
+        <div class="brand-icon">🏫</div>
+        <div><div class="brand-name">SPKTR</div><div class="brand-sub">Pengurusan Kunci & Tempahan</div></div>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-title">Utama</div>
+      <a class="nav-item" href="dashboard.html"><span class="nav-icon">📊</span> Dashboard</a>
+      <div class="nav-section-title">Pinjaman</div>
+      <a class="nav-item" href="kunci.html"><span class="nav-icon">🔑</span> Pinjaman Kunci</a>
+      <div class="nav-section-title">Tempahan</div>
+      <a class="nav-item active" href="tempahan.html"><span class="nav-icon">📅</span> Tempahan Ruang</a>
+      <a class="nav-item" href="peralatan.html"><span class="nav-icon">📦</span> Tempahan Peralatan</a>
+      <div class="nav-section-title">Laporan</div>
+      <a class="nav-item" href="laporan.html"><span class="nav-icon">📋</span> Laporan & Audit</a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-profile" onclick="logKeluar()">
+        <div class="user-avatar" id="sidebarAvatar">A</div>
+        <div class="user-info">
+          <div class="user-name" id="sidebarNama">-</div>
+          <div class="user-role" id="sidebarPeranan">-</div>
+        </div>
+        <span style="margin-left:auto;color:var(--gray-500);font-size:14px">⏏</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <div class="main-content">
+    <header class="topbar">
+      <div class="topbar-left">
+        <h2>📅 Tempahan Ruang</h2>
+        <p>Tempah makmal dan bilik kuliah jabatan</p>
+      </div>
+      <div class="topbar-right">
+        <button class="btn btn-primary" onclick="bukaModalTempah()">＋ Buat Tempahan</button>
+        <button class="btn btn-danger btn-sm" onclick="logKeluar()">⏏ Log Keluar</button>
+      </div>
+    </header>
+
+    <div class="page-content">
+
+      <!-- TAB BAR -->
+      <div class="tab-bar">
+        <button class="tab-btn active" onclick="tukTab('kalendar',this)">📅 Kalendar</button>
+        <button class="tab-btn" onclick="tukTab('senarai',this)">📋 Senarai Tempahan</button>
+        <button class="tab-btn" id="tabAdmin" style="display:none" onclick="tukTab('kelulusan',this)">⏳ Kelulusan</button>
+      </div>
+
+      <!-- TAB: KALENDAR -->
+      <div class="tab-panel active" id="panelKalendar">
+        <div class="card">
+          <div class="card-body">
+            <div class="cal-nav">
+              <button onclick="ubahBulan(-1)">◀ Sebelum</button>
+              <h3 id="calTitle"></h3>
+              <button onclick="ubahBulan(1)">Selepas ▶</button>
+            </div>
+            <div style="margin-bottom:12px">
+              <select id="filterRuangKal" onchange="renderKalendar()" style="padding:8px 12px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:13px;color:var(--gray-700)">
+                <option value="">Semua Ruang</option>
+              </select>
+            </div>
+            <div class="calendar-grid">
+              <div class="cal-header">Ahad</div>
+              <div class="cal-header">Isnin</div>
+              <div class="cal-header">Selasa</div>
+              <div class="cal-header">Rabu</div>
+              <div class="cal-header">Khamis</div>
+              <div class="cal-header">Jumaat</div>
+              <div class="cal-header">Sabtu</div>
+            </div>
+            <div class="calendar-grid" id="calGrid" style="margin-top:4px"></div>
+            <div style="display:flex;gap:12px;margin-top:12px;flex-wrap:wrap">
+              <span><span class="cal-event makmal">■</span> Makmal</span>
+              <span><span class="cal-event kuliah">■</span> Bilik Kuliah</span>
+              <span><span class="cal-event lain">■</span> Seminar / Lain</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB: SENARAI -->
+      <div class="tab-panel" id="panelSenarai">
+        <div class="card">
+          <div class="card-header">
+            <div><h3>📋 Senarai Tempahan</h3></div>
+            <div class="filter-bar" style="margin:0">
+              <div class="search-input" style="min-width:160px">
+                <span>🔍</span>
+                <input type="text" id="cariTempahan" placeholder="Cari ruang / pensyarah..." oninput="renderSenarai()" />
+              </div>
+              <select id="filterStatusTemp" onchange="renderSenarai()" style="padding:8px 12px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:13px;color:var(--gray-700)">
+                <option value="">Semua Status</option>
+                <option value="menunggu">Menunggu</option>
+                <option value="diluluskan">Diluluskan</option>
+                <option value="ditolak">Ditolak</option>
+                <option value="dibatal">Dibatal</option>
+              </select>
+            </div>
+          </div>
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Ruang</th>
+                  <th>Pensyarah</th>
+                  <th>Tarikh</th>
+                  <th>Masa</th>
+                  <th>Tujuan</th>
+                  <th>Status</th>
+                  <th>Tindakan</th>
+                </tr>
+              </thead>
+              <tbody id="tblSenarai"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB: KELULUSAN (Admin) -->
+      <div class="tab-panel" id="panelKelulusan">
+        <div class="card">
+          <div class="card-header">
+            <div><h3>⏳ Tempahan Menunggu Kelulusan</h3><p>Sila proses semua permintaan di bawah</p></div>
+          </div>
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Ruang</th>
+                  <th>Pensyarah</th>
+                  <th>Tarikh</th>
+                  <th>Masa</th>
+                  <th>Pelajar</th>
+                  <th>Tujuan</th>
+                  <th>Tindakan</th>
+                </tr>
+              </thead>
+              <tbody id="tblKelulusan"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- MODAL: BUAT TEMPAHAN -->
+  <div class="modal-overlay" id="modalTempah">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>📅 Buat Tempahan Ruang</h3>
+        <button class="modal-close" onclick="tutupModal('modalTempah')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div id="alertTempah" class="alert alert-danger mb-16" style="display:none"></div>
+
+        <div class="grid-2">
+          <div class="form-group">
+            <label>Ruang *</label>
+            <select id="pilihRuang" onchange="semakKetersediaan()">
+              <option value="">-- Pilih Ruang --</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Tarikh *</label>
+            <input type="date" id="inputTarikh" onchange="semakKetersediaan()" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Masa *</label>
+          <div class="time-slot">
+            <select id="inputMasaMula" onchange="semakKetersediaan()">
+              <option value="">Mula</option>
+            </select>
+            <span style="color:var(--gray-400)">hingga</span>
+            <select id="inputMasaTamat" onchange="semakKetersediaan()">
+              <option value="">Tamat</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="statusKetersediaan" style="display:none;padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:12px"></div>
+
+        <div class="form-group">
+          <label>Tujuan / Nama Kelas *</label>
+          <input type="text" id="inputTujuanTemp" placeholder="Contoh: Kelas BCS301 — Pangkalan Data" />
+        </div>
+        <div class="grid-2">
+          <div class="form-group">
+            <label>Anggaran Bilangan Pelajar</label>
+            <input type="number" id="inputPelajar" placeholder="Contoh: 30" min="1" />
+          </div>
+          <div class="form-group" id="grupPilihPensyarahTemp" style="display:none">
+            <label>Pensyarah (Admin)</label>
+            <select id="pilihPensyarahTemp"></select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Catatan Tambahan</label>
+          <textarea id="inputCatatanTemp" placeholder="Peralatan yang diperlukan, dll..." rows="2"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-gray" onclick="tutupModal('modalTempah')">Batal</button>
+        <button class="btn btn-primary" onclick="buatTempahan()">📅 Hantar Tempahan</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: BUTIRAN TEMPAHAN -->
+  <div class="modal-overlay" id="modalButiran">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>📋 Butiran Tempahan</h3>
+        <button class="modal-close" onclick="tutupModal('modalButiran')">✕</button>
+      </div>
+      <div class="modal-body" id="butiranKandungan"></div>
+      <div class="modal-footer">
+        <button class="btn btn-gray" onclick="tutupModal('modalButiran')">Tutup</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/data.js"></script>
+  <script>
+    DB.init();
+    if (!Sesi.required()) { }
+
+    const sesi = Sesi.get();
+    document.getElementById('sidebarNama').textContent = sesi.nama;
+    document.getElementById('sidebarPeranan').textContent = sesi.peranan === 'admin' ? 'Pentadbir' : sesi.jawatan;
+    const av = document.getElementById('sidebarAvatar');
+    av.textContent = sesi.nama.charAt(0);
+    av.className = 'user-avatar ' + (sesi.peranan === 'admin' ? 'avatar-admin' : 'avatar-lecturer');
+
+    if (sesi.peranan === 'admin') document.getElementById('tabAdmin').style.display = '';
+
+    // Kalendar state
+    let tahunKal = new Date().getFullYear();
+    let bulanKal = new Date().getMonth();
+
+    // Isi jam dalam select
+    function isiJam(selId, def = '') {
+      const sel = document.getElementById(selId);
+      sel.innerHTML = `<option value="">${def}</option>`;
+      for (let h = 7; h <= 22; h++) {
+        ['00', '30'].forEach(m => {
+          if (h === 22 && m === '30') return;
+          const val = `${String(h).padStart(2,'0')}:${m}`;
+          sel.innerHTML += `<option value="${val}">${val}</option>`;
+        });
+      }
+    }
+    isiJam('inputMasaMula', 'Masa Mula');
+    isiJam('inputMasaTamat', 'Masa Tamat');
+
+    // Set tarikh min = hari ini
+    document.getElementById('inputTarikh').min = new Date().toISOString().slice(0,10);
+
+    // ── TAB ──
+    function tukTab(id, btn) {
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById('panel' + id.charAt(0).toUpperCase() + id.slice(1)).classList.add('active');
+      btn.classList.add('active');
+      if (id === 'senarai') renderSenarai();
+      if (id === 'kelulusan') renderKelulusan();
+      if (id === 'kalendar') renderKalendar();
+    }
+
+    // ── KALENDAR ──
+    function ubahBulan(arah) { bulanKal += arah; if (bulanKal > 11) { bulanKal = 0; tahunKal++; } else if (bulanKal < 0) { bulanKal = 11; tahunKal--; } renderKalendar(); }
+
+    function renderKalendar() {
+      const namaBulan = ['Januari','Februari','Mac','April','Mei','Jun','Julai','Ogos','September','Oktober','November','Disember'];
+      document.getElementById('calTitle').textContent = namaBulan[bulanKal] + ' ' + tahunKal;
+
+      const filterRuang = document.getElementById('filterRuangKal').value;
+      const grid = document.getElementById('calGrid');
+      const hariPertama = new Date(tahunKal, bulanKal, 1).getDay();
+      const hariTerakhir = new Date(tahunKal, bulanKal + 1, 0).getDate();
+      const hari = new Date();
+      const tempahan = DB.getTempahan().filter(t => t.status !== 'ditolak' && t.status !== 'dibatal');
+
+      let html = '';
+      // Empty cells sebelum 1hb
+      for (let i = 0; i < hariPertama; i++) html += '<div class="cal-day other-month"></div>';
+
+      for (let d = 1; d <= hariTerakhir; d++) {
+        const tarikhStr = `${tahunKal}-${String(bulanKal+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+        const isToday = d === hari.getDate() && bulanKal === hari.getMonth() && tahunKal === hari.getFullYear();
+        const hari_ini = tempahan.filter(t => t.tarikh === tarikhStr && (!filterRuang || t.kunciId === filterRuang));
+        const evtHtml = hari_ini.slice(0,3).map(t => {
+          const kat = DB.getKunciById(t.kunciId)?.kategori || 'lain';
+          const cls = kat === 'makmal' ? 'makmal' : kat === 'kuliah' ? 'kuliah' : 'lain';
+          return `<div class="cal-event ${cls}" title="${t.namaRuang} — ${t.namaPensyarah}" onclick="lihatButiran('${t.id}')">${t.masaMula} ${t.kodRuang}</div>`;
+        }).join('') + (hari_ini.length > 3 ? `<div class="cal-event lain">+${hari_ini.length-3} lagi</div>` : '');
+        html += `<div class="cal-day${isToday ? ' today' : ''}" onclick="clikTarikh('${tarikhStr}')">
+          <div class="day-num">${d}</div>
+          ${evtHtml}
+        </div>`;
+      }
+      grid.innerHTML = html;
+    }
+
+    function clikTarikh(tarikh) {
+      document.getElementById('inputTarikh').value = tarikh;
+      bukaModalTempah();
+    }
+
+    // ── SENARAI ──
+    function renderSenarai() {
+      const cari = document.getElementById('cariTempahan').value.toLowerCase();
+      const status = document.getElementById('filterStatusTemp').value;
+      let list = sesi.peranan === 'admin'
+        ? DB.getTempahan()
+        : DB.getTempahanByUser(sesi.id);
+      if (status) list = list.filter(t => t.status === status);
+      if (cari) list = list.filter(t =>
+        t.namaRuang.toLowerCase().includes(cari) ||
+        t.namaPensyarah.toLowerCase().includes(cari) ||
+        (t.tujuan || '').toLowerCase().includes(cari)
+      );
+      list = list.slice().reverse();
+      const statusClass = { diluluskan:'badge-success', menunggu:'badge-warning', ditolak:'badge-danger', dibatal:'badge-gray' };
+      const statusLabel = { diluluskan:'✅ Diluluskan', menunggu:'⏳ Menunggu', ditolak:'❌ Ditolak', dibatal:'🚫 Dibatal' };
+      const tbody = document.getElementById('tblSenarai');
+      if (list.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted" style="padding:24px">Tiada rekod tempahan</td></tr>';
+        return;
+      }
+      tbody.innerHTML = list.map((t, i) => {
+        const bolehBatal = (sesi.id === t.userId || sesi.peranan === 'admin') && (t.status === 'menunggu' || t.status === 'diluluskan');
+        return `<tr>
+          <td>${i+1}</td>
+          <td><strong>${t.kodRuang}</strong><br><span class="text-muted text-sm">${t.namaRuang}</span></td>
+          <td>${t.namaPensyarah}</td>
+          <td>${t.tarikh}</td>
+          <td>${t.masaMula} – ${t.masaTamat}</td>
+          <td>${t.tujuan || '-'}</td>
+          <td><span class="badge ${statusClass[t.status]}">${statusLabel[t.status]}</span></td>
+          <td>
+            <button class="btn btn-gray btn-sm" onclick="lihatButiran('${t.id}')">🔍</button>
+            ${bolehBatal ? `<button class="btn btn-danger btn-sm" onclick="batalTemp('${t.id}')">🚫 Batal</button>` : ''}
+          </td>
+        </tr>`;
+      }).join('');
+    }
+
+    function batalTemp(id) {
+      if (!confirm('Anda pasti ingin membatalkan tempahan ini?')) return;
+      DB.batalTempahan(id);
+      renderSenarai();
+      renderKalendar();
+    }
+
+    // ── KELULUSAN ──
+    function renderKelulusan() {
+      const list = DB.getTempahan().filter(t => t.status === 'menunggu');
+      const tbody = document.getElementById('tblKelulusan');
+      if (list.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted" style="padding:24px">✅ Tiada permintaan menunggu kelulusan</td></tr>';
+        return;
+      }
+      tbody.innerHTML = list.map((t, i) => `<tr>
+        <td>${i+1}</td>
+        <td><strong>${t.namaRuang}</strong></td>
+        <td>${t.namaPensyarah}</td>
+        <td>${t.tarikh}</td>
+        <td>${t.masaMula} – ${t.masaTamat}</td>
+        <td>${t.bilPelajar || '-'}</td>
+        <td>${t.tujuan || '-'}</td>
+        <td>
+          <button class="btn btn-success btn-sm" onclick="prosesTemp('${t.id}','diluluskan')">✅ Lulus</button>
+          <button class="btn btn-danger btn-sm" onclick="prosesTemp('${t.id}','ditolak')">❌ Tolak</button>
+        </td>
+      </tr>`).join('');
+    }
+
+    function prosesTemp(id, status) {
+      DB.luluskanTempahan(id, status);
+      renderKelulusan();
+      renderSenarai();
+      renderKalendar();
+    }
+
+    // ── MODAL TEMPAH ──
+    function bukaModalTempah() {
+      const kunci = DB.getKunci();
+      const selRuang = document.getElementById('pilihRuang');
+      selRuang.innerHTML = '<option value="">-- Pilih Ruang --</option>' +
+        kunci.map(k => `<option value="${k.id}">${k.kod} — ${k.nama}</option>`).join('');
+
+      // Filter ruang untuk kalendar
+      const selRuangKal = document.getElementById('filterRuangKal');
+      selRuangKal.innerHTML = '<option value="">Semua Ruang</option>' +
+        kunci.map(k => `<option value="${k.id}">${k.nama}</option>`).join('');
+
+      if (sesi.peranan === 'admin') {
+        document.getElementById('grupPilihPensyarahTemp').style.display = 'block';
+        const users = DB.getUsers().filter(u => u.peranan === 'pensyarah');
+        document.getElementById('pilihPensyarahTemp').innerHTML =
+          `<option value="${sesi.id}">Saya sendiri</option>` +
+          users.map(u => `<option value="${u.id}">${u.nama}</option>`).join('');
+      }
+
+      document.getElementById('alertTempah').style.display = 'none';
+      document.getElementById('statusKetersediaan').style.display = 'none';
+      document.getElementById('inputTujuanTemp').value = '';
+      document.getElementById('inputPelajar').value = '';
+      document.getElementById('inputCatatanTemp').value = '';
+      document.getElementById('modalTempah').classList.add('active');
+    }
+
+    function semakKetersediaan() {
+      const kunciId = document.getElementById('pilihRuang').value;
+      const tarikh = document.getElementById('inputTarikh').value;
+      const mula = document.getElementById('inputMasaMula').value;
+      const tamat = document.getElementById('inputMasaTamat').value;
+      const el = document.getElementById('statusKetersediaan');
+      if (!kunciId || !tarikh || !mula || !tamat) { el.style.display = 'none'; return; }
+      if (mula >= tamat) {
+        el.style.cssText = 'display:block;background:var(--danger-light);color:var(--danger);border:1px solid #fca5a5;border-radius:8px;padding:10px 14px;font-size:13px;margin-bottom:12px';
+        el.textContent = '❌ Masa mula mesti lebih awal dari masa tamat.';
+        return;
+      }
+      const konflik = DB.semakKonflik(kunciId, tarikh, mula, tamat);
+      if (konflik) {
+        el.style.cssText = 'display:block;background:var(--danger-light);color:var(--danger);border:1px solid #fca5a5;border-radius:8px;padding:10px 14px;font-size:13px;margin-bottom:12px';
+        el.textContent = '❌ Konflik! Ruang ini sudah ditempah pada masa tersebut. Sila pilih masa lain.';
+      } else {
+        el.style.cssText = 'display:block;background:var(--success-light);color:var(--success);border:1px solid #6ee7b7;border-radius:8px;padding:10px 14px;font-size:13px;margin-bottom:12px';
+        el.textContent = '✅ Ruang tersedia pada masa ini.';
+      }
+    }
+
+    function buatTempahan() {
+      const kunciId = document.getElementById('pilihRuang').value;
+      const tarikh = document.getElementById('inputTarikh').value;
+      const masaMula = document.getElementById('inputMasaMula').value;
+      const masaTamat = document.getElementById('inputMasaTamat').value;
+      const tujuan = document.getElementById('inputTujuanTemp').value.trim();
+      const errEl = document.getElementById('alertTempah');
+
+      if (!kunciId) { errEl.textContent = 'Sila pilih ruang.'; errEl.style.display = 'flex'; return; }
+      if (!tarikh) { errEl.textContent = 'Sila pilih tarikh.'; errEl.style.display = 'flex'; return; }
+      if (!masaMula || !masaTamat) { errEl.textContent = 'Sila pilih masa mula dan tamat.'; errEl.style.display = 'flex'; return; }
+      if (masaMula >= masaTamat) { errEl.textContent = 'Masa mula mesti lebih awal dari masa tamat.'; errEl.style.display = 'flex'; return; }
+      if (!tujuan) { errEl.textContent = 'Sila masukkan tujuan tempahan.'; errEl.style.display = 'flex'; return; }
+
+      const userId = sesi.peranan === 'admin'
+        ? (document.getElementById('pilihPensyarahTemp').value || sesi.id)
+        : sesi.id;
+
+      const result = DB.tambahTempahan(userId, {
+        kunciId, tarikh, masaMula, masaTamat, tujuan,
+        bilPelajar: document.getElementById('inputPelajar').value,
+        catatan: document.getElementById('inputCatatanTemp').value
+      });
+
+      if (result.error) {
+        errEl.textContent = result.error; errEl.style.display = 'flex'; return;
+      }
+
+      tutupModal('modalTempah');
+      renderKalendar();
+      renderSenarai();
+    }
+
+    // ── LIHAT BUTIRAN ──
+    function lihatButiran(id) {
+      const t = DB.getTempahan().find(x => x.id === id);
+      if (!t) return;
+      const statusClass = { diluluskan:'badge-success', menunggu:'badge-warning', ditolak:'badge-danger', dibatal:'badge-gray' };
+      const statusLabel = { diluluskan:'✅ Diluluskan', menunggu:'⏳ Menunggu Kelulusan', ditolak:'❌ Ditolak', dibatal:'🚫 Dibatal' };
+      document.getElementById('butiranKandungan').innerHTML = `
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div><div class="text-sm text-muted">Ruang</div><div class="font-semibold">${t.namaRuang} (${t.kodRuang})</div></div>
+          <div><div class="text-sm text-muted">Status</div><span class="badge ${statusClass[t.status]}">${statusLabel[t.status]}</span></div>
+          <div><div class="text-sm text-muted">Pensyarah</div><div class="font-semibold">${t.namaPensyarah}</div></div>
+          <div><div class="text-sm text-muted">Tarikh</div><div class="font-semibold">${t.tarikh}</div></div>
+          <div><div class="text-sm text-muted">Masa Mula</div><div class="font-semibold">${t.masaMula}</div></div>
+          <div><div class="text-sm text-muted">Masa Tamat</div><div class="font-semibold">${t.masaTamat}</div></div>
+          <div><div class="text-sm text-muted">Tujuan</div><div class="font-semibold">${t.tujuan || '-'}</div></div>
+          <div><div class="text-sm text-muted">Bil. Pelajar</div><div class="font-semibold">${t.bilPelajar || '-'}</div></div>
+          ${t.catatan ? `<div style="grid-column:1/-1"><div class="text-sm text-muted">Catatan</div><div>${t.catatan}</div></div>` : ''}
+          <div><div class="text-sm text-muted">Dicipta Pada</div><div class="font-semibold">${DB.formatTarikhMasa(t.ciptaPada)}</div></div>
+        </div>
+      `;
+      document.getElementById('modalButiran').classList.add('active');
+    }
+
+    function tutupModal(id) { document.getElementById(id).classList.remove('active'); }
+    document.querySelectorAll('.modal-overlay').forEach(m => {
+      m.addEventListener('click', function(e) { if (e.target === this) this.classList.remove('active'); });
+    });
+
+    function logKeluar() { Sesi.clear(); window.location.href = 'index.html'; }
+
+    // Init — isi filter ruang
+    const kunci = DB.getKunci();
+    document.getElementById('filterRuangKal').innerHTML = '<option value="">Semua Ruang</option>' +
+      kunci.map(k => `<option value="${k.id}">${k.nama}</option>`).join('');
+    renderKalendar();
+    renderSenarai();
+  </script>
+</body>
+</html>

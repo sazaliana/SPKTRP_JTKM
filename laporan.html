@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Laporan & Audit — Sistem Pengurusan Kunci & Tempahan</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    .laporan-header { margin-bottom: 24px; padding-bottom: 16px; border-bottom: 2px solid var(--primary); }
+    .laporan-header h2 { font-size: 18px; color: var(--gray-900); }
+    .laporan-header p { font-size: 13px; color: var(--gray-500); margin-top: 4px; }
+    .summary-row { display:flex;gap:24px;flex-wrap:wrap;margin-bottom:20px; }
+    .summary-item { text-align:center; }
+    .summary-item .val { font-size:22px;font-weight:700;color:var(--primary); }
+    .summary-item .lbl { font-size:11px;color:var(--gray-500); }
+    @media print {
+      .sidebar, .topbar, .filter-bar, .no-print, .btn, header { display:none!important; }
+      .main-content { margin-left:0!important; }
+      .page-content { padding:0!important; }
+      .card { box-shadow:none!important; border:1px solid #ccc!important; page-break-inside:avoid; }
+    }
+  </style>
+</head>
+<body class="app-layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-logo">
+        <div class="brand-icon">🏫</div>
+        <div><div class="brand-name">SPKTR</div><div class="brand-sub">Pengurusan Kunci & Tempahan</div></div>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-title">Utama</div>
+      <a class="nav-item" href="dashboard.html"><span class="nav-icon">📊</span> Dashboard</a>
+      <div class="nav-section-title">Pinjaman</div>
+      <a class="nav-item" href="kunci.html"><span class="nav-icon">🔑</span> Pinjaman Kunci</a>
+      <div class="nav-section-title">Tempahan</div>
+      <a class="nav-item" href="tempahan.html"><span class="nav-icon">📅</span> Tempahan Ruang</a>
+      <a class="nav-item" href="peralatan.html"><span class="nav-icon">📦</span> Tempahan Peralatan</a>
+      <div class="nav-section-title">Laporan</div>
+      <a class="nav-item active" href="laporan.html"><span class="nav-icon">📋</span> Laporan & Audit</a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-profile" onclick="logKeluar()">
+        <div class="user-avatar" id="sidebarAvatar">A</div>
+        <div class="user-info">
+          <div class="user-name" id="sidebarNama">-</div>
+          <div class="user-role" id="sidebarPeranan">-</div>
+        </div>
+        <span style="margin-left:auto;color:var(--gray-500);font-size:14px">⏏</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <div class="main-content">
+    <header class="topbar no-print">
+      <div class="topbar-left">
+        <h2>📋 Laporan & Audit</h2>
+        <p>Rekod lengkap pinjaman kunci dan tempahan ruang</p>
+      </div>
+      <div class="topbar-right">
+        <button class="btn btn-primary no-print" onclick="cetakLaporan()">🖨️ Cetak Laporan</button>
+        <button class="btn btn-danger btn-sm no-print" onclick="logKeluar()">⏏ Log Keluar</button>
+      </div>
+    </header>
+
+    <div class="page-content">
+
+      <!-- FILTER -->
+      <div class="card mb-24 no-print">
+        <div class="card-body">
+          <div class="filter-bar" style="margin:0">
+            <div class="form-group" style="margin:0;flex:1;min-width:140px">
+              <label style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--gray-500);margin-bottom:4px;display:block">Dari Tarikh</label>
+              <input type="date" id="filterDari" style="padding:8px 12px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:13px;width:100%" oninput="renderSemua()" />
+            </div>
+            <div class="form-group" style="margin:0;flex:1;min-width:140px">
+              <label style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--gray-500);margin-bottom:4px;display:block">Hingga Tarikh</label>
+              <input type="date" id="filterHingga" style="padding:8px 12px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:13px;width:100%" oninput="renderSemua()" />
+            </div>
+            <div class="form-group" style="margin:0;flex:1;min-width:140px">
+              <label style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--gray-500);margin-bottom:4px;display:block">Pensyarah</label>
+              <select id="filterPensyarah" onchange="renderSemua()" style="width:100%;padding:8px 12px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:13px;color:var(--gray-700)">
+                <option value="">Semua Pensyarah</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin:0;flex:1;min-width:140px">
+              <label style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--gray-500);margin-bottom:4px;display:block">Ruang / Kunci</label>
+              <select id="filterRuang" onchange="renderSemua()" style="width:100%;padding:8px 12px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:13px;color:var(--gray-700)">
+                <option value="">Semua Ruang</option>
+              </select>
+            </div>
+            <button class="btn btn-gray" onclick="resetFilter()" style="align-self:flex-end">↺ Set Semula</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- RINGKASAN STATISTIK (cetak) -->
+      <div class="card mb-24" id="ringkasanCetak" style="display:none">
+        <div class="card-body">
+          <div class="laporan-header">
+            <h2>🏫 Sistem Pengurusan Kunci & Tempahan Ruang</h2>
+            <p>Laporan Dijana: <span id="tarikhCetak"></span></p>
+          </div>
+          <div class="summary-row" id="summaryRow"></div>
+        </div>
+      </div>
+
+      <!-- STATS CARDS -->
+      <div class="stats-grid no-print">
+        <div class="stat-card">
+          <div class="stat-icon icon-blue">🔑</div>
+          <div class="stat-info">
+            <div class="stat-value" id="sJumlahPinjaman">0</div>
+            <div class="stat-label">Jumlah Pinjaman</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon icon-green">✅</div>
+          <div class="stat-info">
+            <div class="stat-value" id="sPinjamanSelesai">0</div>
+            <div class="stat-label">Pinjaman Selesai</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon icon-yellow">📅</div>
+          <div class="stat-info">
+            <div class="stat-value" id="sJumlahTempahan">0</div>
+            <div class="stat-label">Jumlah Tempahan</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon icon-purple">✅</div>
+          <div class="stat-info">
+            <div class="stat-value" id="sTempahanDilulus">0</div>
+            <div class="stat-label">Tempahan Diluluskan</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- LAPORAN PINJAMAN KUNCI -->
+      <div class="card mb-24">
+        <div class="card-header">
+          <div><h3>🔑 Rekod Pinjaman Kunci</h3></div>
+          <div class="no-print">
+            <span id="bilanganPinjaman" class="badge badge-primary">0 rekod</span>
+          </div>
+        </div>
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Tarikh & Masa Ambil</th>
+                <th>Kunci</th>
+                <th>Pensyarah</th>
+                <th>Tujuan</th>
+                <th>Masa Pulang</th>
+                <th>Tempoh</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="tblLapPinjaman"></tbody>
+            <tfoot id="footPinjaman"></tfoot>
+          </table>
+        </div>
+      </div>
+
+      <!-- LAPORAN TEMPAHAN RUANG -->
+      <div class="card mb-24">
+        <div class="card-header">
+          <div><h3>📅 Rekod Tempahan Ruang</h3></div>
+          <div class="no-print">
+            <span id="bilanganTempahan" class="badge badge-primary">0 rekod</span>
+          </div>
+        </div>
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Tarikh Dicipta</th>
+                <th>Ruang</th>
+                <th>Pensyarah</th>
+                <th>Tarikh Tempahan</th>
+                <th>Masa</th>
+                <th>Tujuan</th>
+                <th>Bil. Pelajar</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="tblLapTempahan"></tbody>
+            <tfoot id="footTempahan"></tfoot>
+          </table>
+        </div>
+      </div>
+
+      <!-- LAPORAN TEMPAHAN PERALATAN -->
+      <div class="card mb-24">
+        <div class="card-header">
+          <div><h3>📦 Rekod Tempahan Peralatan</h3></div>
+          <div class="no-print">
+            <span id="bilanganPeralatan" class="badge badge-primary">0 rekod</span>
+          </div>
+        </div>
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Tarikh Dicipta</th>
+                <th>Peralatan</th>
+                <th>Jenis</th>
+                <th>Pensyarah</th>
+                <th>Tarikh Guna</th>
+                <th>Masa</th>
+                <th>Tujuan</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="tblLapPeralatan"></tbody>
+            <tfoot id="footPeralatan"></tfoot>
+          </table>
+        </div>
+      </div>
+
+      <!-- RUMUSAN PENGGUNAAN RUANG -->
+      <div class="card">
+        <div class="card-header">
+          <h3>🏫 Rumusan Penggunaan Ruang</h3>
+        </div>
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Ruang</th>
+                <th>Kategori</th>
+                <th>Kali Dipinjam</th>
+                <th>Kali Ditempah</th>
+                <th>Tempahan Dilulus</th>
+                <th>Jumlah Guna</th>
+              </tr>
+            </thead>
+            <tbody id="tblRumusan"></tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script src="js/data.js"></script>
+  <script>
+    DB.init();
+    if (!Sesi.required()) { }
+
+    const sesi = Sesi.get();
+    document.getElementById('sidebarNama').textContent = sesi.nama;
+    document.getElementById('sidebarPeranan').textContent = sesi.peranan === 'admin' ? 'Pentadbir' : sesi.jawatan;
+    const av = document.getElementById('sidebarAvatar');
+    av.textContent = sesi.nama.charAt(0);
+    av.className = 'user-avatar ' + (sesi.peranan === 'admin' ? 'avatar-admin' : 'avatar-lecturer');
+
+    // Isi filter
+    function isiFilter() {
+      const users = DB.getUsers().filter(u => u.peranan !== 'admin');
+      document.getElementById('filterPensyarah').innerHTML = '<option value="">Semua Pensyarah</option>' +
+        users.map(u => `<option value="${u.id}">${u.nama}</option>`).join('');
+      const kunci = DB.getKunci();
+      document.getElementById('filterRuang').innerHTML = '<option value="">Semua Ruang</option>' +
+        kunci.map(k => `<option value="${k.id}">${k.nama}</option>`).join('');
+    }
+
+    function getFilteredPinjaman() {
+      let list = sesi.peranan === 'admin' ? DB.getPinjaman() : DB.getPinjamanByUser(sesi.id);
+      const dari = document.getElementById('filterDari').value;
+      const hingga = document.getElementById('filterHingga').value;
+      const userId = document.getElementById('filterPensyarah').value;
+      const kunciId = document.getElementById('filterRuang').value;
+      if (dari) list = list.filter(p => p.masaAmbil && p.masaAmbil.slice(0,10) >= dari);
+      if (hingga) list = list.filter(p => p.masaAmbil && p.masaAmbil.slice(0,10) <= hingga);
+      if (userId) list = list.filter(p => p.userId === userId);
+      if (kunciId) list = list.filter(p => p.kunciId === kunciId);
+      return list;
+    }
+
+    function getFilteredTempahan() {
+      let list = sesi.peranan === 'admin' ? DB.getTempahan() : DB.getTempahanByUser(sesi.id);
+      const dari = document.getElementById('filterDari').value;
+      const hingga = document.getElementById('filterHingga').value;
+      const userId = document.getElementById('filterPensyarah').value;
+      const kunciId = document.getElementById('filterRuang').value;
+      if (dari) list = list.filter(t => t.tarikh >= dari);
+      if (hingga) list = list.filter(t => t.tarikh <= hingga);
+      if (userId) list = list.filter(t => t.userId === userId);
+      if (kunciId) list = list.filter(t => t.kunciId === kunciId);
+      return list;
+    }
+
+    function renderLapPinjaman(list) {
+      const statusClass = { selesai:'badge-success', aktif:'badge-warning' };
+      const statusLabel = { selesai:'✅ Selesai', aktif:'🔄 Aktif' };
+      document.getElementById('bilanganPinjaman').textContent = list.length + ' rekod';
+      const tbody = document.getElementById('tblLapPinjaman');
+      if (list.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted" style="padding:20px">Tiada rekod</td></tr>';
+        document.getElementById('footPinjaman').innerHTML = '';
+        return;
+      }
+      const sorted = list.slice().sort((a,b) => b.masaAmbil.localeCompare(a.masaAmbil));
+      tbody.innerHTML = sorted.map((p, i) => `<tr>
+        <td>${i+1}</td>
+        <td>${DB.formatTarikhMasa(p.masaAmbil)}</td>
+        <td><strong>${p.kodKunci}</strong> ${p.namaKunci}</td>
+        <td>${p.namaPensyarah}</td>
+        <td>${p.tujuan || '-'}</td>
+        <td>${p.masaPulang ? DB.formatTarikhMasa(p.masaPulang) : '<em class="text-muted">Belum pulang</em>'}</td>
+        <td>${DB.durasi(p.masaAmbil, p.masaPulang)}</td>
+        <td><span class="badge ${statusClass[p.status] || 'badge-gray'}">${statusLabel[p.status] || p.status}</span></td>
+      </tr>`).join('');
+      document.getElementById('footPinjaman').innerHTML = `<tr style="background:var(--gray-50);font-weight:700">
+        <td colspan="3">JUMLAH</td>
+        <td colspan="5">${list.length} rekod | ${list.filter(p=>p.status==='selesai').length} selesai | ${list.filter(p=>p.status==='aktif').length} aktif</td>
+      </tr>`;
+    }
+
+    function renderLapTempahan(list) {
+      const statusClass = { diluluskan:'badge-success', menunggu:'badge-warning', ditolak:'badge-danger', dibatal:'badge-gray' };
+      const statusLabel = { diluluskan:'✅ Diluluskan', menunggu:'⏳ Menunggu', ditolak:'❌ Ditolak', dibatal:'🚫 Dibatal' };
+      document.getElementById('bilanganTempahan').textContent = list.length + ' rekod';
+      const tbody = document.getElementById('tblLapTempahan');
+      if (list.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="9" class="text-center text-muted" style="padding:20px">Tiada rekod</td></tr>';
+        document.getElementById('footTempahan').innerHTML = '';
+        return;
+      }
+      const sorted = list.slice().sort((a,b) => b.ciptaPada.localeCompare(a.ciptaPada));
+      tbody.innerHTML = sorted.map((t, i) => `<tr>
+        <td>${i+1}</td>
+        <td>${DB.formatTarikhMasa(t.ciptaPada)}</td>
+        <td><strong>${t.kodRuang}</strong> ${t.namaRuang}</td>
+        <td>${t.namaPensyarah}</td>
+        <td>${t.tarikh}</td>
+        <td>${t.masaMula} – ${t.masaTamat}</td>
+        <td>${t.tujuan || '-'}</td>
+        <td>${t.bilPelajar || '-'}</td>
+        <td><span class="badge ${statusClass[t.status]}">${statusLabel[t.status]}</span></td>
+      </tr>`).join('');
+      document.getElementById('footTempahan').innerHTML = `<tr style="background:var(--gray-50);font-weight:700">
+        <td colspan="3">JUMLAH</td>
+        <td colspan="6">${list.length} rekod | ${list.filter(t=>t.status==='diluluskan').length} diluluskan | ${list.filter(t=>t.status==='menunggu').length} menunggu | ${list.filter(t=>t.status==='ditolak').length} ditolak</td>
+      </tr>`;
+    }
+
+    function renderRumusan(pinjaman, tempahan) {
+      const kunci = DB.getKunci();
+      const tbody = document.getElementById('tblRumusan');
+      const rows = kunci.map((k, i) => {
+        const p = pinjaman.filter(x => x.kunciId === k.id).length;
+        const t = tempahan.filter(x => x.kunciId === k.id).length;
+        const tDilulus = tempahan.filter(x => x.kunciId === k.id && x.status === 'diluluskan').length;
+        return { k, p, t, tDilulus, jumlah: p + t };
+      }).sort((a,b) => b.jumlah - a.jumlah);
+      tbody.innerHTML = rows.map((r, i) => `<tr>
+        <td>${i+1}</td>
+        <td><strong>${r.k.kod}</strong> — ${r.k.nama}<br><span class="text-muted text-sm">${r.k.lokasi}</span></td>
+        <td><span class="badge badge-purple">${r.k.kategori}</span></td>
+        <td class="font-semibold">${r.p}</td>
+        <td class="font-semibold">${r.t}</td>
+        <td class="font-semibold text-success">${r.tDilulus}</td>
+        <td class="font-bold text-primary">${r.jumlah}</td>
+      </tr>`).join('');
+    }
+
+    function getFilteredTempahanPeralatan() {
+      let list = sesi.peranan === 'admin' ? DB.getTempahanPeralatan() : DB.getTempahanPeralatanByUser(sesi.id);
+      const dari = document.getElementById('filterDari').value;
+      const hingga = document.getElementById('filterHingga').value;
+      const userId = document.getElementById('filterPensyarah').value;
+      if (dari) list = list.filter(t => t.tarikh >= dari);
+      if (hingga) list = list.filter(t => t.tarikh <= hingga);
+      if (userId) list = list.filter(t => t.userId === userId);
+      return list;
+    }
+
+    function renderLapPeralatan(list) {
+      const statusClass = { diluluskan:'badge-success', menunggu:'badge-warning', ditolak:'badge-danger', dibatal:'badge-gray' };
+      const statusLabel = { diluluskan:'✅ Diluluskan', menunggu:'⏳ Menunggu', ditolak:'❌ Ditolak', dibatal:'🚫 Dibatal' };
+      const ikons = { laptop:'💻', lcd:'📽️' };
+      document.getElementById('bilanganPeralatan').textContent = list.length + ' rekod';
+      const tbody = document.getElementById('tblLapPeralatan');
+      if (list.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="9" class="text-center text-muted" style="padding:20px">Tiada rekod</td></tr>';
+        document.getElementById('footPeralatan').innerHTML = '';
+        return;
+      }
+      const sorted = list.slice().sort((a,b) => b.ciptaPada.localeCompare(a.ciptaPada));
+      tbody.innerHTML = sorted.map((t, i) => `<tr>
+        <td>${i+1}</td>
+        <td>${DB.formatTarikhMasa(t.ciptaPada)}</td>
+        <td><strong>${t.kodPeralatan}</strong> ${t.namaPeralatan}</td>
+        <td>${ikons[t.jenisPeralatan] || '📦'} ${t.jenisPeralatan === 'laptop' ? 'Laptop' : 'LCD Projector'}</td>
+        <td>${t.namaPensyarah}</td>
+        <td>${t.tarikh}</td>
+        <td>${t.masaMula} – ${t.masaTamat}</td>
+        <td>${t.tujuan || '-'}</td>
+        <td><span class="badge ${statusClass[t.status]}">${statusLabel[t.status]}</span></td>
+      </tr>`).join('');
+      document.getElementById('footPeralatan').innerHTML = `<tr style="background:var(--gray-50);font-weight:700">
+        <td colspan="3">JUMLAH</td>
+        <td colspan="6">${list.length} rekod | ${list.filter(x=>x.status==='diluluskan').length} diluluskan | ${list.filter(x=>x.status==='menunggu').length} menunggu | ${list.filter(x=>x.status==='ditolak').length} ditolak</td>
+      </tr>`;
+    }
+
+    function renderStats(pinjaman, tempahan) {
+      document.getElementById('sJumlahPinjaman').textContent = pinjaman.length;
+      document.getElementById('sPinjamanSelesai').textContent = pinjaman.filter(p => p.status === 'selesai').length;
+      document.getElementById('sJumlahTempahan').textContent = tempahan.length;
+      document.getElementById('sTempahanDilulus').textContent = tempahan.filter(t => t.status === 'diluluskan').length;
+    }
+
+    function renderSemua() {
+      const p = getFilteredPinjaman();
+      const t = getFilteredTempahan();
+      const ep = getFilteredTempahanPeralatan();
+      renderStats(p, t);
+      renderLapPinjaman(p);
+      renderLapTempahan(t);
+      renderLapPeralatan(ep);
+      renderRumusan(p, t);
+    }
+
+    function resetFilter() {
+      document.getElementById('filterDari').value = '';
+      document.getElementById('filterHingga').value = '';
+      document.getElementById('filterPensyarah').value = '';
+      document.getElementById('filterRuang').value = '';
+      renderSemua();
+    }
+
+    function cetakLaporan() {
+      const p = getFilteredPinjaman();
+      const t = getFilteredTempahan();
+      const ep = getFilteredTempahanPeralatan();
+      document.getElementById('tarikhCetak').textContent = DB.formatTarikhMasa(new Date().toISOString());
+      document.getElementById('summaryRow').innerHTML = `
+        <div class="summary-item"><div class="val">${p.length}</div><div class="lbl">Jumlah Pinjaman</div></div>
+        <div class="summary-item"><div class="val">${p.filter(x=>x.status==='selesai').length}</div><div class="lbl">Pinjaman Selesai</div></div>
+        <div class="summary-item"><div class="val">${t.length}</div><div class="lbl">Tempahan Ruang</div></div>
+        <div class="summary-item"><div class="val">${t.filter(x=>x.status==='diluluskan').length}</div><div class="lbl">Ruang Dilulus</div></div>
+        <div class="summary-item"><div class="val">${ep.length}</div><div class="lbl">Tempahan Peralatan</div></div>
+        <div class="summary-item"><div class="val">${ep.filter(x=>x.status==='diluluskan').length}</div><div class="lbl">Peralatan Dilulus</div></div>
+      `;
+      document.getElementById('ringkasanCetak').style.display = 'block';
+      setTimeout(() => { window.print(); document.getElementById('ringkasanCetak').style.display = 'none'; }, 100);
+    }
+
+    function logKeluar() { Sesi.clear(); window.location.href = 'index.html'; }
+
+    isiFilter();
+    renderSemua();
+  </script>
+</body>
+</html>
